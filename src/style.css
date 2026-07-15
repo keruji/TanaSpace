@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+:root {
+  --preview-height: 0px;
+  --sticky-offset: 0px;
+}
+
+#preview-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+#site-header {
+  position: sticky;
+  top: var(--preview-height);
+  z-index: 40;
+  background-color: rgb(2 6 23 / 0.95);
+  backdrop-filter: blur(12px);
+}
+
+@media (min-width: 1024px) and (min-height: 760px) {
+  html {
+    scroll-behavior: smooth;
+    scroll-snap-type: y mandatory;
+    scroll-padding-top: var(--sticky-offset);
+  }
+
+  main > section {
+    height: calc(100svh - var(--sticky-offset));
+    min-height: calc(100svh - var(--sticky-offset));
+    scroll-margin-top: var(--sticky-offset);
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+}
