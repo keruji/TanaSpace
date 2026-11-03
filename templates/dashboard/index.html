@@ -1,0 +1,142 @@
+{% extends 'app/base.html' %}
+{% load static %}
+{% block title %}Dashboard · TanaSpace{% endblock %}
+{% block app_main %}
+<main id="main" class="dashboard-grid">
+  <section class="panel welcome-panel" aria-labelledby="dashboard-title">
+    <div class="panel-heading">
+      <span class="eyebrow">Your everyday, in one place</span>
+      <time>{% now 'D, M j' %}</time>
+    </div>
+    <h1 id="dashboard-title">
+      Welcome home,<br>
+      <span>{{ user.username }}.</span>
+    </h1>
+    <p>
+      A little space to see what you have,<br class="desktop-break">
+      and make room for what’s next.
+    </p>
+    <div class="welcome-footer">
+      <span class="status-dot"></span>
+      Your space is ready
+      <a class="text-action" href="{% url 'items:index' %}">
+        Add an item <span aria-hidden="true">↗</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="panel activity-panel" aria-labelledby="activity-title">
+    <div class="panel-heading">
+      <h2 id="activity-title">Recent activity</h2>
+      <span class="tag">Account</span>
+    </div>
+    <p class="section-caption">The beginning of something organized.</p>
+    <ol class="activity-list">
+      {% if user.last_login %}
+      <li>
+        <span class="activity-icon" aria-hidden="true">↗</span>
+        <div>
+          <h3>Signed in to TanaSpace</h3>
+          <p>Your dashboard is ready for you.</p>
+        </div>
+        <time datetime="{{ user.last_login|date:'c' }}">
+          {{ user.last_login|date:'M j, Y · H:i' }}
+        </time>
+      </li>
+      {% endif %}
+      <li>
+        <span class="activity-icon" aria-hidden="true">✓</span>
+        <div>
+          <h3>Your space was created</h3>
+          <p>A place for the things that matter.</p>
+        </div>
+        <time datetime="{{ user.date_joined|date:'c' }}">
+          {{ user.date_joined|date:'M j, Y · H:i' }}
+        </time>
+      </li>
+    </ol>
+    <div class="up-next">
+      <span class="eyebrow">Up next</span>
+      <p>
+        Lists and favorites are on their way.<br>
+        Your items already have a place here.
+      </p>
+    </div>
+  </section>
+
+  <section class="panel items-preview-panel" aria-labelledby="recent-items-title">
+    <div class="panel-heading">
+      <h2 id="recent-items-title">My items</h2>
+      <a class="text-action" href="{% url 'items:index' %}">
+        View all <span aria-hidden="true">↗</span>
+      </a>
+    </div>
+    {% if recent_items %}
+    <ul class="item-list compact-item-list">
+      {% for item in recent_items %}
+      <li>
+        <span class="item-symbol" aria-hidden="true">▤</span>
+        <div class="item-details">
+          <h3><a href="{% url 'items:edit' item.pk %}">{{ item.name }}</a></h3>
+          {% if item.description %}
+          <p>{{ item.description|truncatechars:90 }}</p>
+          {% elif item.notes %}
+          <p>{{ item.notes|truncatechars:90 }}</p>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-items">
+      <span aria-hidden="true">▤</span>
+      <p>No items saved yet.</p>
+      <a class="primary-button" href="{% url 'items:index' %}">
+        Add your first item <span aria-hidden="true">↗</span>
+      </a>
+    </div>
+    {% endif %}
+  </section>
+
+  <aside class="panel account-panel" aria-labelledby="account-title">
+    <div class="panel-heading">
+      <h2 id="account-title">Your space</h2>
+      <span aria-hidden="true">↗</span>
+    </div>
+    <img
+      class="profile-avatar"
+      src="{% static 'images/avatar.svg' %}"
+      width="58"
+      height="58"
+      alt="Profile avatar placeholder"
+    >
+    <h3 class="profile-name">{{ user.username }}</h3>
+    <p class="section-caption">A fresh start. All yours.</p>
+    <dl class="account-details">
+      <div>
+        <dt>Member since</dt>
+        <dd>{{ user.date_joined|date:'M Y' }}</dd>
+      </div>
+      <div>
+        <dt>Home</dt>
+        <dd>Dashboard</dd>
+      </div>
+      <div>
+        <dt>Account</dt>
+        <dd><span class="status-dot"></span>Active</dd>
+      </div>
+    </dl>
+    <div class="account-note">
+      <span aria-hidden="true">✳</span>
+      <p>
+        Good things start<br>
+        with a little space.
+      </p>
+    </div>
+  </aside>
+  <footer class="dashboard-footer">
+    <span>TanaSpace</span>
+    <span>Less scattered. More together.</span>
+  </footer>
+</main>
+{% endblock %}

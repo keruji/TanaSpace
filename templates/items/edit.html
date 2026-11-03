@@ -1,0 +1,25 @@
+{% extends 'app/base.html' %}
+{% block title %}Edit {{ item.name }} · TanaSpace{% endblock %}
+{% block app_main %}
+<main id="main" class="items-page">
+  <div class="items-page-heading">
+    <div>
+      <a class="text-action" href="{% url 'items:index' %}">← Back to My Tana</a>
+      <h1>Edit item</h1>
+      <p>Update the details you want to keep.</p>
+    </div>
+  </div>
+
+  <section class="panel item-form-panel item-edit-panel" aria-labelledby="edit-item-title">
+    <span class="eyebrow">Your collection</span>
+    <h2 id="edit-item-title">{{ item.name }}</h2>
+    <form method="post" action="{% url 'items:edit' item.pk %}" class="item-form">
+      {% csrf_token %}
+      {% include 'includes/form.html' %}
+      <button class="primary-button full-width" type="submit">
+        Save changes
+      </button>
+    </form>
+  </section>
+</main>
+{% endblock %}

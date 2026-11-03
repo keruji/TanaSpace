@@ -1,0 +1,19 @@
+{% extends 'registration/base.html' %}
+{% block title %}Log in · TanaSpace{% endblock %}
+{% block auth_content %}
+<span class="eyebrow">Welcome back</span>
+<h2 id="auth-title">Log in to your space</h2>
+<p class="card-description">A fresh start to a more organized day.</p>
+<form method="post" action="{% url 'accounts:login' %}">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ next }}">
+  {% include 'includes/form.html' %}
+  <button class="primary-button full-width" type="submit">
+    Log in <span aria-hidden="true">↗</span>
+  </button>
+</form>
+<p class="auth-switch">
+  New to TanaSpace?
+  <a href="{% url 'accounts:signup' %}">Create an account</a>
+</p>
+{% endblock %}

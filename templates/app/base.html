@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block body_class %}workspace{% endblock %}
+{% block content %}
+<header class="app-header">
+  <a
+    class="app-logo"
+    href="{% url 'dashboard:index' %}"
+    aria-label="TanaSpace dashboard"
+  >
+    {% include 'includes/logo.html' %}
+  </a>
+  <a class="brand" href="{% url 'dashboard:index' %}">TanaSpace</a>
+  <div class="header-actions">
+    <div class="search-placeholder">
+      <input
+        type="search"
+        placeholder="Search"
+        aria-label="Search (coming soon)"
+        disabled
+      >
+      <span aria-hidden="true">⌕</span>
+    </div>
+    <button
+      class="icon-button"
+      type="button"
+      disabled
+      aria-label="Notifications (coming soon)"
+      title="Notifications coming soon"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9M10 21h4" />
+      </svg>
+    </button>
+    <img
+      class="avatar"
+      src="{% static 'images/avatar.svg' %}"
+      width="26"
+      height="26"
+      alt="Profile placeholder for {{ user.username }}"
+    >
+  </div>
+</header>
+<div class="app-layout">
+  <aside class="sidebar">
+    <nav aria-label="Main navigation">
+      <a
+        aria-label="Dashboard"
+        class="nav-item{% if active_nav == 'dashboard' %} active{% endif %}"
+        href="{% url 'dashboard:index' %}"
+        {% if active_nav == 'dashboard' %}aria-current="page"{% endif %}
+      >
+        <span aria-hidden="true">▦</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a
+        class="nav-item{% if active_nav == 'items' %} active{% endif %}"
+        href="{% url 'items:index' %}"
+        {% if active_nav == 'items' %}aria-current="page"{% endif %}
+      >
+        <span aria-hidden="true">▤</span>
+        <span class="nav-label">My Tana</span>
+      </a>
+      <button class="nav-item" type="button" disabled title="Coming soon">
+        <span aria-hidden="true">☆</span>
+        <span class="nav-label">Favorites</span>
+        <small>Soon</small>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="eyebrow">A place for everything.</span>
+      <form method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button class="logout-button" type="submit">
+          Log out <span aria-hidden="true">↗</span>
+        </button>
+      </form>
+    </div>
+  </aside>
+  {% block app_main %}{% endblock %}
+</div>
+{% endblock %}

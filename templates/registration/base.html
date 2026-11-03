@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block body_class %}auth-page{% endblock %}
+{% block content %}
+<header class="auth-header">
+  <a class="brand" href="{% url 'landing' %}">
+    {% include 'includes/logo.html' %}
+    <span>TanaSpace</span>
+  </a>
+  <a class="quiet-link" href="{% url 'landing' %}">← Back to home</a>
+</header>
+<main id="main" class="auth-main">
+  <div class="auth-intro">
+    <span class="eyebrow">A little more organized</span>
+    <h1>
+      Your things.<br>
+      Your plans.<br>
+      Your space.
+    </h1>
+    <p>
+      A place to keep what matters together.<br>
+      Pick up where you left off.
+    </p>
+    <span class="intro-decoration">
+      tana / 棚
+      <span>a shelf for your everyday</span>
+    </span>
+  </div>
+  <section class="auth-card" aria-labelledby="auth-title">
+    {% block auth_content %}{% endblock %}
+  </section>
+</main>
+<footer class="auth-footer">TanaSpace · A place for everything.</footer>
+{% endblock %}

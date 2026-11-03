@@ -6,3 +6,9 @@ yarn-error.log*
 pnpm-debug.log*
 .env
 .env.*
+.git
+.venv
+__pycache__
+*.pyc
+*.sqlite3
+staticfiles

@@ -1,0 +1,26 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta
+    name="description"
+    content="Your personal space for the things you own and what comes next."
+  >
+  <title>{% block title %}TanaSpace{% endblock %}</title>
+  <link
+    rel="icon"
+    type="image/svg+xml"
+    href="{% static 'images/logo.svg' %}"
+  >
+  <link
+    rel="stylesheet"
+    href="{% static 'css/app.css' %}?v={{ app_css_version }}"
+  >
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="skip-link" href="#main">Skip to content</a>
+  {% block content %}{% endblock %}
+</body>
+</html>
