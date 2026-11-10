@@ -12,12 +12,13 @@ want to build next.
 TanaSpace is in early development. You can currently:
 
 - Explore the homepage to learn about the project.
-- Create an account with a username and password—no email required.
-- Log in to your personal dashboard.
-- Add items with a name, description, and optional notes, then edit them in My Tana.
+- Open a private demo space for one hour from the homepage.
+- Organize items with required Tana Types, and view, edit, or delete them in My Tana.
+- Add, edit, and delete types; a type in use cannot be deleted until its items are moved or removed.
+- Save up to 20 types and 100 items per account.
 - See your latest items on the dashboard.
 - See when you joined and your latest sign-in time.
-- Log out when you’re finished.
+- Log out to remove your demo space immediately. Expired demo accounts and data are cleaned automatically.
 
 The dashboard is the starting point for your space. My Tana holds the items
 you save. Favorites, search, and notifications are visible as previews, but
@@ -58,6 +59,10 @@ the [PolyForm Noncommercial License 1.0.0](LICENSE).
 The license also permits use by certain organizations, including charities,
 educational institutions, and government institutions. Read [LICENSE](LICENSE)
 for the full terms. Third-party software keeps its own licenses.
+
+The UI icons come from Lucide; see [its included license](static/images/lucide-LICENSE.txt).
+
+For HTTPS deployment with request limits, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 These terms do not retract permissions already granted for versions previously
 released under the Unlicense.

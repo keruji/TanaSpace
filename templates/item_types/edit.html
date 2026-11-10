@@ -1,0 +1,25 @@
+{% extends 'app/base.html' %}
+{% block title %}Edit {{ item_type.name }} · TanaSpace{% endblock %}
+{% block app_main %}
+<main id="main" class="item-types-page">
+  <div class="item-types-page-heading">
+    <div>
+      <a class="text-action" href="{% url 'item_types:index' %}">{% include 'includes/icon.html' with icon_name='arrow-left' only %} Back to My Tana</a>
+      <h1>Edit</h1>
+      <p>Update the details of item type.</p>
+    </div>
+  </div>
+
+  <section class="panel item-type-form-panel item-type-edit-panel" aria-labelledby="edit-item-type-title">
+    <span class="eyebrow">Your item types</span>
+    <h2 id="edit-item-type-title">{{ item_type.name }}</h2>
+    <form method="post" action="{% url 'item_types:edit' item_type.pk %}" class="item-type-form">
+      {% csrf_token %}
+      {% include 'includes/form.html' %}
+      <button class="primary-button full-width" type="submit">
+        Save changes
+      </button>
+    </form>
+  </section>
+</main>
+{% endblock %}

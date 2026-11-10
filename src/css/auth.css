@@ -1,0 +1,151 @@
+.auth-page {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+.auth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32px 6vw;
+}
+.quiet-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.quiet-link:hover {
+  text-decoration: underline;
+}
+.auth-main {
+  max-width: 1040px;
+  width: 100%;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 90px;
+  align-items: center;
+  padding: 40px;
+}
+.auth-intro h1 {
+  font-size: 64px;
+  line-height: 1.08;
+  font-weight: 500;
+  letter-spacing: -3px;
+  margin: 22px 0;
+}
+.auth-intro > p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.intro-decoration {
+  display: block;
+  margin-top: 55px;
+  color: #929c84;
+  font-size: 20px;
+}
+.intro-decoration > span {
+  display: block;
+  margin-top: 8px;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.auth-card {
+  background: #fff;
+  padding: 36px;
+  border-radius: 20px;
+  box-shadow: 0 12px 50px #363f2004;
+}
+.auth-card h2 {
+  font-size: 25px;
+  letter-spacing: -0.9px;
+  font-weight: 500;
+  margin-top: 14px;
+}
+.card-description {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 12px 0 26px;
+}
+.form-field {
+  margin-bottom: 20px;
+}
+.form-field label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 9px;
+}
+.form-field input {
+  width: 100%;
+  background: #fafbf8;
+  border: 1px solid #dde1d5;
+  padding: 12px;
+  border-radius: 8px;
+  color: #30362a;
+}
+.help-text {
+  font-size: 10px;
+  line-height: 1.7;
+  color: #909785;
+  margin-top: 8px;
+}
+.help-text ul {
+  padding-left: 14px;
+}
+.form-errors,
+.field-errors {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #9d3e35;
+}
+.form-errors {
+  background: #fff3f0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 18px;
+}
+.form-errors ul,
+.field-errors ul {
+  list-style: none;
+}
+.field-errors {
+  margin-top: 8px;
+}
+.primary-button {
+  border: 0;
+  background: #536445;
+  color: #fff;
+  border-radius: 8px;
+  padding: 13px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.primary-button:hover {
+  background: #415236;
+}
+.full-width {
+  width: 100%;
+}
+.auth-switch {
+  margin-top: 25px;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.8;
+}
+.auth-switch a {
+  color: #596d45;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.auth-footer {
+  text-align: center;
+  font-size: 10px;
+  color: #a0a596;
+  padding: 24px;
+}

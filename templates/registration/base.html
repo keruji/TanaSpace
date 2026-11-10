@@ -6,7 +6,7 @@
     {% include 'includes/logo.html' %}
     <span>TanaSpace</span>
   </a>
-  <a class="quiet-link" href="{% url 'landing' %}">← Back to home</a>
+  <a class="quiet-link" href="{% url 'landing' %}">{% include 'includes/icon.html' with icon_name='arrow-left' only %} Back to home</a>
 </header>
 <main id="main" class="auth-main">
   <div class="auth-intro">

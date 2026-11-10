@@ -19,7 +19,7 @@
         aria-label="Search (coming soon)"
         disabled
       >
-      <span aria-hidden="true">⌕</span>
+      <span>{% include 'includes/icon.html' with icon_name='search' only %}</span>
     </div>
     <button
       class="icon-button"
@@ -28,17 +28,9 @@
       aria-label="Notifications (coming soon)"
       title="Notifications coming soon"
     >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9M10 21h4" />
-      </svg>
+      {% include 'includes/icon.html' with icon_name='bell' only %}
     </button>
-    <img
-      class="avatar"
-      src="{% static 'images/avatar.svg' %}"
-      width="26"
-      height="26"
-      alt="Profile placeholder for {{ user.username }}"
-    >
+    {% include 'includes/icon.html' with icon_name='user-round' icon_class='avatar' only %}
   </div>
 </header>
 <div class="app-layout">
@@ -50,7 +42,7 @@
         href="{% url 'dashboard:index' %}"
         {% if active_nav == 'dashboard' %}aria-current="page"{% endif %}
       >
-        <span aria-hidden="true">▦</span>
+        <span>{% include 'includes/icon.html' with icon_name='layout-dashboard' only %}</span>
         <span class="nav-label">Dashboard</span>
       </a>
       <a
@@ -58,11 +50,17 @@
         href="{% url 'items:index' %}"
         {% if active_nav == 'items' %}aria-current="page"{% endif %}
       >
-        <span aria-hidden="true">▤</span>
+        <span>{% include 'includes/icon.html' with icon_name='notebook-tabs' only %}</span>
         <span class="nav-label">My Tana</span>
       </a>
+      <a class="nav-item{% if active_nav == 'item_types' %} active{% endif %}"
+         href="{% url 'item_types:index' %}"
+         {% if active_nav == 'item_types' %}aria-current="page"{% endif %}>
+        <span>{% include 'includes/icon.html' with icon_name='notebook-tabs' only %}</span>
+        <span class="nav-label">Tana Types</span>
+      </a>
       <button class="nav-item" type="button" disabled title="Coming soon">
-        <span aria-hidden="true">☆</span>
+        <span>{% include 'includes/icon.html' with icon_name='star' only %}</span>
         <span class="nav-label">Favorites</span>
         <small>Soon</small>
       </button>
@@ -72,7 +70,7 @@
       <form method="post" action="{% url 'accounts:logout' %}">
         {% csrf_token %}
         <button class="logout-button" type="submit">
-          Log out <span aria-hidden="true">↗</span>
+          Log out {% include 'includes/icon.html' with icon_name='arrow-up-right' only %}
         </button>
       </form>
     </div>

@@ -8,58 +8,65 @@
       <h1>My Tana</h1>
       <p>Keep a simple record of the things you want to remember.</p>
     </div>
-    <span class="items-count">{{ items|length }} item{{ items|length|pluralize }}</span>
+    <div class="flex items-center gap-3">
+      <span class="items-count">{{ item_count }} item{{ item_count|pluralize }}</span>
+      <a class="primary-button" href="{% url 'items:create' %}">Add item</a>
+    </div>
   </div>
-
-  <div class="items-layout">
-    <section class="panel item-form-panel" aria-labelledby="add-item-title">
-      <span class="eyebrow">Make room for one more</span>
-      <h2 id="add-item-title">Add an item</h2>
-      <p class="section-caption">Give it a name, a description, or a note.</p>
-      <form method="post" action="{% url 'items:index' %}" class="item-form">
-        {% csrf_token %}
-        {% include 'includes/form.html' %}
-        <button class="primary-button full-width" type="submit">
-          Save item <span aria-hidden="true">↗</span>
-        </button>
-      </form>
-    </section>
-
-    <section class="panel item-list-panel" aria-labelledby="saved-items-title">
-      <div class="panel-heading">
-        <h2 id="saved-items-title">Saved items</h2>
-        <span class="tag">Your space</span>
-      </div>
-      {% if items %}
+  {% if item_count > 40 %}<p class="section-caption">Showing 40 items per page, newest first.</p>{% endif %}
+  <section class="panel item-list-panel" aria-labelledby="saved-items-title">
+    <div class="panel-heading"><h2 id="saved-items-title">Saved items</h2><span class="tag">Your space</span></div>
+    {% if items %}
       <ul class="item-list">
         {% for item in items %}
-        <li class="clickable-item">
-          <a class="item-row" href="{% url 'items:edit' item.pk %}" aria-label="Edit {{ item.name }}">
-            <span class="item-symbol" aria-hidden="true">▤</span>
-            <div class="item-details">
-              <h3>{{ item.name }}</h3>
-              {% if item.description %}
-              <p>{{ item.description|linebreaksbr }}</p>
-              {% endif %}
-              {% if item.notes %}
-              <p class="item-note">Note: {{ item.notes|linebreaksbr }}</p>
-              {% endif %}
-            </div>
-            <div class="item-actions">
-              <time datetime="{{ item.created_at|date:'c' }}">{{ item.created_at|date:'M j, Y' }}</time>
-            </div>
-          </a>
-        </li>
+          <li class="clickable-item">
+            <a class="item-row" href="{% url 'items:detail' item.pk %}" aria-label="View {{ item.name }}">
+              <span class="item-symbol">{% include 'includes/icon.html' with icon_name='package' only %}</span>
+              <div class="item-details"><h3>{{ item.name }}</h3><p>{{ item.item_type.name }}</p>{% if item.description %}<p>{{ item.description|truncatechars:100 }}</p>{% endif %}</div>
+              <div class="item-actions"><time datetime="{{ item.created_at|date:'c' }}">{{ item.created_at|date:'M j, Y' }}</time></div>
+            </a>
+          </li>
         {% endfor %}
       </ul>
-      {% else %}
-      <div class="empty-items">
-        <span aria-hidden="true">▤</span>
-        <h3>Nothing on your shelf yet.</h3>
-        <p>Add your first item to start making this space yours.</p>
-      </div>
-      {% endif %}
-    </section>
-  </div>
+    {% else %}
+      <div class="empty-items"><span>{% include 'includes/icon.html' with icon_name='package' only %}</span><h3>Nothing on your shelf yet.</h3><p>Create a type, then add your first item.</p><a class="text-action" href="{% url 'item_types:index' %}">Manage types</a></div>
+    {% endif %}
+  </section>
+  {% if page_obj.has_other_pages %}
+    <nav class="list-pagination" aria-label="Item pages">
+      {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+      <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+    </nav>
+  {% endif %}
 </main>
+{% if modal_mode %}
+<div class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4 sm:p-8">
+  <section class="modal-card relative w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl sm:p-8" role="dialog" aria-modal="true" aria-labelledby="item-modal-title">
+    <a class="modal-close" href="{% url 'items:index' %}" aria-label="Close window">Close {% include 'includes/icon.html' with icon_name='x' only %}</a>
+    {% if modal_mode == 'create' %}
+      <span class="eyebrow">Your collection</span><h2 id="item-modal-title">Add an item</h2>
+      {% if at_item_limit %}
+        <p class="form-errors" role="alert">You can save up to 100 items. Delete one before adding another.</p>
+      {% elif needs_type %}
+        <p class="form-errors" role="alert">Create a Tana Type before adding an item.</p>
+        <a class="primary-button" href="{% url 'item_types:create' %}">Create a type</a>
+      {% else %}
+        <form method="post" action="{% url 'items:create' %}" class="item-form">{% csrf_token %}{% include 'includes/form.html' %}<button class="primary-button full-width" type="submit">Save item</button></form>
+      {% endif %}
+    {% elif modal_mode == 'edit' %}
+      <span class="eyebrow">Your collection</span><h2 id="item-modal-title">Edit {{ selected_item.name }}</h2>
+      <form method="post" action="{% url 'items:edit' selected_item.pk %}" class="item-form">{% csrf_token %}{% include 'includes/form.html' %}<button class="primary-button full-width" type="submit">Save changes</button></form>
+    {% elif modal_mode == 'delete' %}
+      <span class="eyebrow">Your collection</span><h2 id="item-modal-title">Delete {{ selected_item.name }}?</h2>
+      <p class="section-caption">This item will be permanently deleted.</p>
+      <form method="post" action="{% url 'items:delete' selected_item.pk %}" class="modal-actions">{% csrf_token %}<a class="text-action" href="{% url 'items:detail' selected_item.pk %}">Cancel</a><button class="danger-button" type="submit">Delete item</button></form>
+    {% else %}
+      <span class="eyebrow">{{ selected_item.item_type.name }}</span><h2 id="item-modal-title">{{ selected_item.name }}</h2>
+      <dl class="detail-list"><div><dt>Description</dt><dd>{{ selected_item.description|default:'—'|linebreaksbr }}</dd></div><div><dt>Notes</dt><dd>{{ selected_item.notes|default:'—'|linebreaksbr }}</dd></div><div><dt>Created</dt><dd>{{ selected_item.created_at|date:'M j, Y' }}</dd></div></dl>
+      <div class="modal-actions"><a class="text-action" href="{% url 'items:delete' selected_item.pk %}">Delete</a><a class="primary-button" href="{% url 'items:edit' selected_item.pk %}">Edit item</a></div>
+    {% endif %}
+  </section>
+</div>
+{% endif %}
 {% endblock %}

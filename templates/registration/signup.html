@@ -8,7 +8,7 @@
   {% csrf_token %}
   {% include 'includes/form.html' %}
   <button class="primary-button full-width" type="submit">
-    Create account <span aria-hidden="true">↗</span>
+    Create account {% include 'includes/icon.html' with icon_name='arrow-up-right' only %}
   </button>
 </form>
 <p class="auth-switch">

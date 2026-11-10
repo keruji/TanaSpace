@@ -9,7 +9,7 @@
   <input type="hidden" name="next" value="{{ next }}">
   {% include 'includes/form.html' %}
   <button class="primary-button full-width" type="submit">
-    Log in <span aria-hidden="true">↗</span>
+    Log in {% include 'includes/icon.html' with icon_name='arrow-up-right' only %}
   </button>
 </form>
 <p class="auth-switch">

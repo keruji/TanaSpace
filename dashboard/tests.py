@@ -4,7 +4,7 @@ from django.test import TestCase
 
 class DashboardTests(TestCase):
     def test_dashboard_requires_login_and_slash_redirect_preserves_protection(self):
-        self.assertRedirects(self.client.get("/tana"), "/accounts/login/?next=/tana")
+        self.assertRedirects(self.client.get("/tana"), "/?next=/tana")
         self.assertRedirects(self.client.get("/tana/"), "/tana", fetch_redirect_response=False)
 
     def test_dashboard_displays_only_signed_in_account(self):

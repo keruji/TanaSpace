@@ -8,5 +8,6 @@ urlpatterns = [
     path("tana", include("dashboard.urls")),
     path("tana/", RedirectView.as_view(pattern_name="dashboard:index")),
     path("tana/items/", include("items.urls")),
+    path("tana/item_types/", include("item_types.urls")),
     path("admin/", admin.site.urls),
 ]

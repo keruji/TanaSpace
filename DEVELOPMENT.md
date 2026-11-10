@@ -15,7 +15,7 @@ Browser → config/urls.py → app/urls.py → view → model/database
                                       ↘ template → HTML response
 ```
 
-Each Django app (`accounts`, `dashboard`, `items`) owns one part of the
+Each Django app (`accounts`, `dashboard`, `items`, `item_types`) owns one part of the
 product. These files are the main building blocks:
 
 | File | What it does |
@@ -39,41 +39,63 @@ queries to the signed-in user; creating a model does not add those rules.
 | Path | Purpose |
 | --- | --- |
 | `config/settings.py` | Installed apps, database, authentication, templates, static files, and environment settings. |
-| `config/urls.py` | Top-level routes: `/`, `/accounts/`, `/tana`, `/tana/items/`, and `/admin/`. |
-| `accounts/` | Custom `User` model, signup form and view, login/logout routes, admin registration, tests. Login/logout use Django's built-in views. |
+| `config/urls.py` | Top-level routes: `/`, `/accounts/`, `/tana`, `/tana/items/`, `/tana/item_types/`, and `/admin/`. |
+| `accounts/` | Custom `User` model, session-scoped demo entry and logout, temporarily disabled public login/signup routes, admin registration, tests. |
+| `common/models.py` | Abstract `OwnershipModel` with shared name, owner, creation time, and edit history fields for future user-owned models. |
 | `dashboard/` | The `/tana` page. Its view fetches the signed-in user's three latest items. |
-| `items/` | Item model, form, add/list/edit views, routes, admin, migrations, and tests. |
+| `items/` | Required type relation, item forms, list, floating create/view/edit/delete pages, routes, admin, migrations, and tests. |
+| `item_types/` | Type model, form, ordered list, floating create/view/edit/delete pages, routes, migrations, and tests. |
 | `templates/base.html` | Shared HTML shell for app and account pages. |
 | `templates/app/base.html` | App header, sidebar, logout form, and `app_main` block. |
 | `templates/dashboard/`, `templates/items/`, `templates/registration/` | Page HTML. |
 | `templates/includes/` | Reused logo and form-field markup. |
 | `templates/landing.html` | Public landing page at `/`. |
-| `static/css/app.css` | Styles for account, dashboard, and item pages. |
-| `static/images/` | Logo and avatar assets; add future static images here. |
-| `src/style.css`, `src/main.js` | Landing page styles and its section-scrolling JavaScript. Vite builds these into `dist/app.css` and `dist/app.js`. |
+| `src/css/global.css` | Shared page shell, form, and modal styles. |
+| `src/css/auth.css`, `dashboard.css`, `items.css`, `item_types.css` | Styles owned by their page or module; Vite compiles them together. |
+| `static/images/` | Logo and the local Lucide icon sprite; add future static images here. |
+| `src/style.css`, `src/main.js` | Shared Tailwind entry plus landing styles and JavaScript. Vite builds these into `dist/app.css` and `dist/app.js`. |
 | `docker-compose.yml`, `Dockerfile` | Local containers and image build. |
 | `tests.py` in each app | Checks for that app's behavior. |
 
-The landing page uses Tailwind classes in `templates/landing.html`, with extra
-rules in `src/style.css`. The signed-in pages use `static/css/app.css`.
-Changing one stylesheet will not normally change the other part of the site.
-Django serves both the landing page and the app; Vite only **builds assets** for
-the landing page. Edit source files, not generated `dist/` files.
+All templates can use Tailwind utilities. The frontend watcher compiles
+`src/style.css` into `dist/app.css`; `@source "../templates"` scans the Django
+templates. `templates/base.html` and the landing page load that output.
+Landing-specific rules stay in `src/style.css`; shared rules stay in
+`src/css/global.css`, and each module has its own source stylesheet. All of
+these files run through Vite, so they can use Tailwind directives such as
+`@apply`. The browser receives one compiled `dist/app.css` file.
+UI icons use `templates/includes/icon.html` and `static/images/lucide.svg`;
+`src/css/icons.css` sets their shared size and stroke style. The TanaSpace
+logo remains its own asset.
+Django serves the pages; Vite **builds Tailwind assets** for every page. Edit
+source files, not generated `dist/` files. Item and type lists show 40 records per page. An item needs a type; no fallback type is created.
+
+Each account can create up to 20 types and 100 items. Names are limited to 160
+characters, descriptions to 500, and item notes to 2,000. The create views
+check quotas inside a transaction while locking the account row, so concurrent
+requests cannot normally pass the same quota check on PostgreSQL. Editing a
+record does not consume another slot; deleting one frees a slot.
 
 ## Run it locally
 
 From the repository root, in the VS Code terminal:
 
+Copy `.env.example` to `.env` and set a long random `POSTGRES_PASSWORD`, then run:
+
 ```bash
 docker compose up --build -d
 ```
 
-Open <http://localhost:5173>. Create an account at `/accounts/signup/`, then
-open `/tana` for the dashboard or `/tana/items/` for My Tana. The port is
-5173 because Compose maps it to Django's port 8000 inside the container.
+Open <http://localhost:5173> and click **Demo**. This creates a temporary demo
+user named `demo` plus nine digits and opens `/tana`. Its session expires after
+one hour. Logging out removes the demo user and its data immediately; a small
+cleanup loop deletes expired demo accounts every five minutes. At most 25 demo
+accounts can be active at once by default. Public login and signup
+are temporarily disabled. The port is 5173 because Compose maps it to Django's
+port 8000 inside the container.
 
 While Compose is running, Django reloads Python and template changes, and Vite
-rebuilds landing-page assets. Refresh the browser after editing. The app CSS
+rebuilds Tailwind assets. Refresh the browser after editing. The app CSS
 link includes a version based on the file's modification time to refresh
 cached styles. If you change `docker-compose.yml`, `requirements.txt`, or the
 `Dockerfile`, recreate the containers with `docker compose up --build -d`.
@@ -89,8 +111,8 @@ docker compose exec app python manage.py createsuperuser
 docker compose down
 ```
 
-`createsuperuser` enables a login for `/admin/`. `docker compose down`
-stops the app but keeps the database volume. Avoid `docker compose down -v`
+`createsuperuser` enables a login for `/admin/`. PostgreSQL stores data in the
+`postgres_data` volume; `docker compose down` keeps it. Avoid `docker compose down -v`
 unless you intend to delete local data.
 
 ## Follow one feature through the code
@@ -98,18 +120,18 @@ unless you intend to delete local data.
 Adding an item is a useful example of the full path:
 
 1. `config/urls.py` includes `items.urls` under `/tana/items/`.
-2. `items/urls.py` maps that path to `items.views.index`.
-3. On GET, `index` builds an empty `ItemForm` and queries items belonging to
-   `request.user`; it renders `templates/items/index.html`.
-4. The template extends `templates/app/base.html`, shows the list, and renders
-   the form. Its POST form includes `{% csrf_token %}`.
+2. `items/urls.py` maps the list and floating create/view/edit/delete paths.
+3. The view limits queries to `request.user` and renders `templates/items/index.html`.
+4. The create window shows an error until the user creates a Tana Type. Its
+   POST form includes `{% csrf_token %}`.
 5. On POST, the view validates `ItemForm`, assigns `owner = request.user`,
-   saves the item, and redirects back to the list.
-6. `items/models.py` defines the `Item` table. The dashboard view reads the
+   saves the item, and redirects to its read-only view.
+6. `items/models.py` defines the `Item` table by inheriting the shared
+   `OwnershipModel` fields from `common/models.py`. The dashboard view reads the
    same table to display recent items.
 
-Editing goes through `items.views.edit` and
-`templates/items/edit.html`. The view looks up an item by both its ID **and**
+Editing goes through `items.views.edit` and the floating form in
+`templates/items/index.html`. The view looks up an item by both its ID **and**
 `owner=request.user`, then records `edited_at` and `edited_by` on a
 successful save. Audit fields are not part of `ItemForm`, so visitors cannot
 submit them. The view also requires login. Keep these rules whenever you add a
@@ -135,10 +157,12 @@ feature from stored data to browser output.
 3. Add the field to the explicit `ItemForm.Meta.fields` list in
    `items/forms.py` if users should edit it. Do not put owner or audit fields
    in that list.
-4. Show it in `templates/items/index.html`, `templates/items/edit.html`, or
+4. Show it in `templates/items/index.html` or
    `templates/dashboard/index.html` as needed. The shared form include
    renders fields from `ItemForm` automatically.
-5. Add or adjust styles in `static/css/app.css` if needed.
+5. Add shared styles in `src/css/global.css`, or module styles in the
+   matching stylesheet under `src/css/`. Use Tailwind utilities directly in
+   templates for small layout and spacing changes.
 6. Update `items/tests.py` to check saving, display, and owner privacy.
 7. Run tests and commit the new file in `items/migrations/` with the code.
 
@@ -153,7 +177,7 @@ responsibility; a new screen alone does not require one.
 
 **For landing-page changes:** edit `templates/landing.html`, `src/style.css`,
 or `src/main.js`. Vite watches these files in Compose. Its Tailwind source is
-configured for the landing template in `src/style.css`. The landing page's
+configured for all templates in `src/style.css`. The shared
 `app.css` and `app.js` are generated files in `dist/`; do not edit them.
 
 ## A repeatable workflow

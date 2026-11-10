@@ -1,10 +1,95 @@
 @import "tailwindcss";
-@source "../templates/landing.html";
+@import "./css/global.css";
+@import "./css/icons.css";
+@import "./css/auth.css";
+@import "./css/dashboard.css";
+@import "./css/items.css";
+@import "./css/item_types.css";
+@source "../templates";
 
 :root {
   --preview-height: 0px;
   --sticky-offset: 0px;
+  --landing-canvas: #efefed;
+  --landing-surface: #fff;
+  --landing-soft: #f6f7f3;
+  --landing-quiet: #fafbf8;
+  --landing-text: #292b29;
+  --landing-muted: #7c7e78;
+  --landing-line: #dde1d5;
+  --landing-accent: #536445;
+  --landing-accent-hover: #415236;
+  --landing-accent-soft: #edf0e6;
+  --landing-accent-text: #526546;
+  color-scheme: light;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
 }
+
+:root[data-theme="dark"] {
+  --landing-canvas: #181e19;
+  --landing-surface: #252d25;
+  --landing-soft: #202820;
+  --landing-quiet: #2d372c;
+  --landing-text: #eef2e9;
+  --landing-muted: #b4c0ae;
+  --landing-line: #455344;
+  --landing-accent: #536445;
+  --landing-accent-hover: #415236;
+  --landing-accent-soft: #344332;
+  --landing-accent-text: #c1d7ae;
+  color-scheme: dark;
+}
+
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--landing-line);
+  border-radius: 0.6rem;
+  background: var(--landing-soft);
+  color: var(--landing-muted);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.theme-toggle:hover { color: var(--landing-accent-text); border-color: var(--landing-accent); background: var(--landing-accent-soft); }
+.theme-toggle:focus-visible { outline: 3px solid #81986a; outline-offset: 4px; border-radius: 4px; }
+.theme-toggle .ui-icon { width: 1.15rem; height: 1.15rem; }
+.theme-icon-sun { display: none; }
+:root[data-theme="dark"] .theme-icon-sun { display: inline-flex; }
+:root[data-theme="dark"] .theme-icon-moon { display: none; }
+
+.bg-slate-950 { background-color: var(--landing-canvas); }
+.bg-slate-900 { background-color: var(--landing-surface); }
+[class~="bg-slate-900/50"] { background-color: var(--landing-soft); }
+.border-slate-800, .border-slate-700, .border-slate-600 { border-color: var(--landing-line); }
+.text-slate-100, .text-slate-200 { color: var(--landing-text); }
+.text-slate-300 { color: var(--landing-muted); }
+.text-slate-400, .text-slate-500 { color: var(--landing-muted); }
+.text-indigo-300 { color: var(--landing-accent-text); }
+.bg-indigo-500 { background-color: var(--landing-accent); }
+[class~="hover:bg-indigo-400"]:hover { background-color: var(--landing-accent-hover); }
+[class~="bg-indigo-400/10"] { background-color: var(--landing-accent-soft); }
+[class~="border-indigo-400/30"],
+[class~="border-indigo-400/40"] { border-color: #cbd4c2; }
+[class~="shadow-indigo-950/40"] { --tw-shadow-color: rgb(54 63 32 / 0.08); }
+[class~="hover:bg-slate-900"]:hover,
+[class~="hover:bg-slate-800"]:hover { background-color: var(--landing-soft); }
+[class~="focus:ring-indigo-300"]:focus { --tw-ring-color: #81986a; }
+[class~="hover:text-white"]:hover { color: var(--landing-text); }
+[class~="hover:border-slate-500"]:hover,
+[class~="hover:border-slate-400"]:hover { border-color: var(--landing-accent); }
+.preview-item-card { background: var(--landing-accent-soft); color: var(--landing-text); }
+.preview-item-card:nth-child(2), .preview-item-card:nth-child(4) { background: var(--landing-soft); }
+.preview-item-card:nth-child(3) { background: var(--landing-quiet); }
+.preview-item-meta { color: var(--landing-muted); }
+article.bg-slate-950 { background-color: var(--landing-quiet); }
+
+:root[data-theme="dark"] [class~="border-indigo-400/30"],
+:root[data-theme="dark"] [class~="border-indigo-400/40"] { border-color: #667d59; }
+:root[data-theme="dark"] [class~="shadow-indigo-950/40"] { --tw-shadow-color: rgb(0 0 0 / 0.24); }
+:root[data-theme="dark"] [class~="hover:text-white"]:hover { color: #fff; }
 
 .landing-brand {
   display: inline-flex;
@@ -26,24 +111,25 @@
   position: sticky;
   top: 0;
   z-index: 50;
+  background-color: var(--landing-accent);
 }
 
 #site-header {
   position: sticky;
   top: var(--preview-height);
   z-index: 40;
-  background-color: rgb(2 6 23 / 0.95);
+  background-color: var(--landing-surface);
   backdrop-filter: blur(12px);
 }
 
 @media (min-width: 1024px) and (min-height: 760px) {
-  html {
+  html.landing-page {
     scroll-behavior: smooth;
     scroll-snap-type: y mandatory;
     scroll-padding-top: var(--sticky-offset);
   }
 
-  main > section {
+  html.landing-page main > section {
     height: calc(100svh - var(--sticky-offset));
     min-height: calc(100svh - var(--sticky-offset));
     scroll-margin-top: var(--sticky-offset);

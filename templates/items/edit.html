@@ -4,7 +4,7 @@
 <main id="main" class="items-page">
   <div class="items-page-heading">
     <div>
-      <a class="text-action" href="{% url 'items:index' %}">← Back to My Tana</a>
+      <a class="text-action" href="{% url 'items:index' %}">{% include 'includes/icon.html' with icon_name='arrow-left' only %} Back to My Tana</a>
       <h1>Edit item</h1>
       <p>Update the details you want to keep.</p>
     </div>

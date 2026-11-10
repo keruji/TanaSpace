@@ -11,4 +11,5 @@ pnpm-debug.log*
 __pycache__
 *.pyc
 *.sqlite3
+.local-backups/
 staticfiles

@@ -1,33 +1,22 @@
-from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils import timezone
+
+from common.models import OwnershipModel
 
 
-class Item(models.Model):
-    owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="items"
+class Item(OwnershipModel):
+    item_type = models.ForeignKey(
+        "item_types.ItemTypes",
+        on_delete=models.PROTECT,
+        related_name="items",
     )
-    name = models.CharField(max_length=160)
-    description = models.TextField(blank=True)
-    notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    edited_at = models.DateTimeField(null=True, blank=True, editable=False)
-    edited_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        editable=False,
-        related_name="edited_items",
-    )
+    description = models.CharField(max_length=500, blank=True)
+    notes = models.CharField(max_length=2000, blank=True)
+
+    def clean(self):
+        super().clean()
+        if self.owner_id and self.item_type_id and self.item_type.owner_id != self.owner_id:
+            raise ValidationError({"item_type": "Choose a type owned by this user."})
 
     class Meta:
         ordering = ["-created_at", "-pk"]
-
-    def __str__(self):
-        return self.name
-
-    def mark_edited(self, user):
-        """Record the editor just before saving an existing item."""
-        self.edited_at = timezone.now()
-        self.edited_by = user

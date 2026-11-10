@@ -1,0 +1,8 @@
+{% load static %}
+<svg
+  class="ui-icon{% if icon_class %} {{ icon_class }}{% endif %}"
+  aria-hidden="true"
+  focusable="false"
+>
+  <use href="{% static 'images/lucide.svg' %}#{{ icon_name }}"></use>
+</svg>

@@ -7,16 +7,36 @@ services:
     volumes:
       - .:/app
       - frontend_assets:/app/dist
-      - database:/data
     environment:
       DJANGO_DEBUG: ${DJANGO_DEBUG:-true}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django-insecure-tanaspace-local-development-only}
       DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,[::1]}
-      DJANGO_DB_PATH: /data/db.sqlite3
+      POSTGRES_HOST: db
+      POSTGRES_DB: ${POSTGRES_DB:-tanaspace}
+      POSTGRES_USER: ${POSTGRES_USER:-tanaspace}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      DEMO_ACCOUNT_TTL_SECONDS: ${DEMO_ACCOUNT_TTL_SECONDS:-3600}
+      DEMO_MAX_ACTIVE_USERS: ${DEMO_MAX_ACTIVE_USERS:-25}
     depends_on:
       frontend:
         condition: service_healthy
-    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+      db:
+        condition: service_healthy
+    command: sh scripts/start.sh
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tanaspace}
+      POSTGRES_USER: ${POSTGRES_USER:-tanaspace}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   frontend:
     image: node:22-alpine
@@ -37,4 +57,4 @@ services:
 volumes:
   node_modules:
   frontend_assets:
-  database:
+  postgres_data:
