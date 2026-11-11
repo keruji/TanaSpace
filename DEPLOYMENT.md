@@ -1,40 +1,98 @@
-# Deploy with Docker Compose
+## Automated deployment plan
 
-The production Compose stack serves HTTPS through Nginx. Nginx limits requests before they reach Django, serves static files, and passes application requests to Gunicorn. PostgreSQL and Gunicorn are private to the Compose network.
+### Production branch
 
-## Prepare
+The production branch is `main`.
 
-1. Point your domain's DNS at the server and obtain a trusted TLS certificate. Put its `fullchain.pem` and `privkey.pem` in a directory readable by Docker.
-2. Copy `.env.production.example` to `.env.production`. Set `DJANGO_ALLOWED_HOSTS` to your domain (comma separated if needed), `TLS_CERT_DIR` to the absolute certificate directory, and generate unique secrets for `DJANGO_SECRET_KEY` and `POSTGRES_PASSWORD`. For example, run `python3 -c 'import secrets; print(secrets.token_urlsafe(48))'` separately for each value. Keep `.env.production` private.
-3. Allow inbound TCP port 443 in your firewall. Certificate renewal is your responsibility; restart the proxy after renewing a certificate.
+Changes are developed on separate branches and submitted through pull
+requests. Tests must pass before a pull request can merge.
 
-Start the production stack:
+Pull requests use squash merging so each merged pull request produces
+one commit on the production branch.
 
-```sh
-docker compose --env-file .env.production -p tanaspace_prod -f compose.production.yml up -d --build
-```
+### Deployment platform
 
-View status and logs:
+Production runs on one server using Docker Compose.
 
-```sh
-docker compose --env-file .env.production -p tanaspace_prod -f compose.production.yml ps
-docker compose --env-file .env.production -p tanaspace_prod -f compose.production.yml logs -f app proxy
-```
+The production configuration is `compose.production.yml`.
 
-Rebuild after changes with the same `up -d --build` command. The production image builds Tailwind and Vite assets; it does not run the development frontend watcher. The app migrates the database and collects static files at startup. The demo cleanup loop runs every five minutes.
+GitHub Actions will connect to the server through SSH.
 
-This stack uses its own PostgreSQL volume. It does not copy data from the development stack. Back up the production database and certificate files separately.
+Server address: 66.181.46.66
+SSH username: kruji
+Deployment directory: /opt/tanaspace
+Public website URL: https://tanaspace.dpdns.org/
 
-## Limits
+### Application images
 
-Nginx applies these limits per client IP, returning HTTP 429 when exceeded:
+GitHub Actions will build application images and publish them to
+GitHub Container Registry.
 
-| Traffic | Sustained rate | Immediate burst |
-| --- | ---: | ---: |
-| All requests | 5 per second | 15 |
-| POST, PUT, PATCH, DELETE | 30 per minute | 5 |
-| Demo creation | 2 per minute | 1 |
+Each image will be tagged with its Git commit SHA. Deployments will
+record the image digest so the exact release can be restored.
 
-It also allows at most 10 simultaneous requests per IP and 100 overall, rejects request bodies over 16 KiB with HTTP 413, and applies short client timeouts. Django caps each account at 20 types and 100 items, allows 25 active demo accounts by default, and removes demo accounts after one hour.
+Previous successful images will be retained for rollback.
 
-These are practical limits for a small deployment, not a guarantee against a distributed attack. They assume clients connect directly to this Nginx service. If you later add a CDN or another reverse proxy, configure trusted client IP forwarding before relying on the per IP limits. Multiple proxy replicas would each keep independent counters.
+### Testing
+
+Pull requests and pushes to the production branch will run:
+
+- Django system checks.
+- Checks for missing migrations.
+- Python tests against a temporary PostgreSQL database.
+- The frontend asset build.
+
+Tests will never connect to the production database.
+
+### Deployment verification
+
+A deployment is successful only when:
+
+- The application starts successfully.
+- Django can access the database.
+- The public HTTPS endpoint responds successfully.
+- Required frontend assets are available.
+
+### Failure and recovery
+
+If pull request tests fail, the pull request remains open and cannot merge.
+
+If tests fail after merging, production remains unchanged. Automation
+will revert the failed change on the production branch and open a new
+draft pull request reapplying those changes.
+
+If a new application release fails deployment verification, automation
+will first restore and verify the last successful production release.
+It will then revert the failed change and open a replacement draft
+pull request.
+
+Infrastructure failures will be reported separately and will not
+automatically cause a code revert.
+
+The original pull request will receive a comment linking to the failed
+workflow and the replacement pull request.
+
+### Database recovery
+
+Production currently contains temporary demo data.
+
+Database backups are outside the scope of this initial deployment setup.
+
+Migrations should remain compatible with the previous application
+release where possible.
+
+Automatic deletion of demo data during recovery is not enabled yet.
+A database reset policy must be decided before enabling automatic
+rollback involving incompatible migrations.
+
+### Deployment ordering
+
+Only one deployment or recovery operation may modify production at a time.
+
+Recovery must not overwrite newer changes on the production branch.
+
+If recovery encounters conflicting or newer changes, it must stop
+repository changes and report the problem.
+
+Recovery must not create repeated revert commits or duplicate
+replacement pull requests.
