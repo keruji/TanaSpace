@@ -64,6 +64,7 @@ jobs:
           fi
 
       - name: Transfer release files and deploy
+        id: deployment
         shell: bash
         env:
           CANDIDATE_IMAGE: ${{ inputs.image }}
@@ -136,7 +137,8 @@ jobs:
             "$PRODUCTION_URL" \
             "$TEST_ROLLBACK"
 
-          ssh "${ssh_options[@]}" "$target" "$deploy_command" <<'REMOTE'
+          deployment_status=0
+          ssh "${ssh_options[@]}" "$target" "$deploy_command" <<'REMOTE' || deployment_status=$?
           set -euo pipefail
 
           release_dir=$1
@@ -149,6 +151,34 @@ jobs:
           bash "$release_dir/scripts/deploy-release.sh" \
             "$candidate_image" "$expected_commit"
           REMOTE
+
+          report_file="$RUNNER_TEMP/deployment-result.json"
+          printf -v report_command 'cat -- %q' "$remote_dir/deployment-result.json"
+
+          if ! ssh "${ssh_options[@]}" "$target" "$report_command" > "$report_file"; then
+            echo "Deployment report could not be retrieved. Repository recovery is disabled."
+            echo "report_valid=false" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          if ! python3 scripts/read-deployment-result.py \
+            "$report_file" "$GITHUB_SHA" "$CANDIDATE_IMAGE" \
+            "$TEST_ROLLBACK" "$deployment_status"; then
+            echo "Repository recovery is disabled because the report is invalid."
+            echo "report_valid=false" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          exit "$deployment_status"
+
+      - name: Save deployment report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: deployment-result-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/deployment-result.json
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Record deployment summary
         env:
