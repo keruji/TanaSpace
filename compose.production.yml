@@ -15,8 +15,7 @@ services:
     restart: unless-stopped
 
   app:
-    build:
-      context: .
+    image: ${APP_IMAGE:?Set APP_IMAGE to the application image reference}
     environment:
       DJANGO_DEBUG: "false"
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set a unique DJANGO_SECRET_KEY}
