@@ -52,7 +52,10 @@ class RepositoryRecoveryTests(unittest.TestCase):
         self.fail_comment = False
         self.race_commit = None
         self.pr_creations = 0
+        self.pr_bodies = []
+        self.pr_titles = []
         env = {
+            "RECOVERY_KIND": "deployment",
             "GH_TOKEN": "mock", "GITHUB_REPOSITORY": "owner/repo",
             "GITHUB_SHA": self.source, "GITHUB_EVENT_NAME": "push",
             "GITHUB_REF": "refs/heads/main", "CANDIDATE_IMAGE": self.image,
@@ -99,6 +102,8 @@ class RepositoryRecoveryTests(unittest.TestCase):
             self.assertEqual(args[args.index("--base") + 1], "main")
             self.assertTrue(args[args.index("--head") + 1].startswith("recovery/reapply-42-"))
             self.pr_creations += 1
+            self.pr_bodies.append(Path(args[args.index("--body-file") + 1]).read_text())
+            self.pr_titles.append(args[args.index("--title") + 1])
             url = "https://github.com/owner/repo/pull/99"
             self.prs = [{"url": url, "state": "OPEN"}]
             return url
@@ -204,6 +209,61 @@ class RepositoryRecoveryTests(unittest.TestCase):
                 self.report = original
                 self.assertEqual(self.remote_main(), self.source)
                 self.assertFalse(self.prs)
+
+    def snapshot_report(self):
+        return {
+            "schema_version": 1, "outcome": "unchanged_healthy",
+            "stage": "python_tests", "failed_commit": self.source,
+            "current_commit": self.previous, "current_image": "tanaspace:previous",
+            "current_image_id": "sha256:" + "f" * 64,
+            "health_ok": True, "assets_ok": True,
+        }
+
+    def test_post_merge_test_recovery_and_duplicate_detection(self):
+        self.report = self.snapshot_report()
+        with mock.patch.dict(os.environ, {"RECOVERY_KIND": "tests", "TEST_EXIT_CODE": "1"}):
+            self.recover()
+            self.recover()
+        self.assertEqual(self.pr_creations, 1)
+        self.assertEqual(len(self.comments), 1)
+        self.assertEqual(self.pr_titles, ["Reapply #42: tests failed"])
+        self.assertIn("was not redeployed", self.pr_bodies[0])
+        self.assertIn("was not redeployed", self.comments[0])
+        self.assertNotIn("was restored", self.comments[0])
+        reverted = self.remote_main()
+        self.assertEqual(self.git("rev-parse", reverted + "^{tree}"),
+                         self.git("rev-parse", self.previous + "^{tree}"))
+
+    def test_post_merge_test_rejects_invalid_production_evidence(self):
+        for changes in [
+            {"schema_version": True}, {"outcome": "deployed"},
+            {"stage": "other"}, {"failed_commit": "0" * 40},
+            {"health_ok": False}, {"health_ok": "true"},
+            {"assets_ok": False}, {"current_image_id": "invalid"},
+            {"current_commit": None}, {"current_commit": self.source},
+        ]:
+            with self.subTest(changes=changes):
+                self.report = dict(self.snapshot_report(), **changes)
+                with mock.patch.dict(os.environ, {"RECOVERY_KIND": "tests", "TEST_EXIT_CODE": "1"}):
+                    with self.assertRaises(ValueError):
+                        self.recover()
+                self.assertEqual(self.remote_main(), self.source)
+                self.assertFalse(self.prs)
+
+    def test_post_merge_test_requires_test_exit_one(self):
+        self.report = self.snapshot_report()
+        for code in ["0", "137", "143"]:
+            with self.subTest(code=code):
+                with mock.patch.dict(os.environ, {"RECOVERY_KIND": "tests", "TEST_EXIT_CODE": code}):
+                    with self.assertRaises(ValueError):
+                        self.recover()
+        self.assertEqual(self.remote_main(), self.source)
+
+    def test_unknown_recovery_kind_is_rejected(self):
+        with mock.patch.dict(os.environ, {"RECOVERY_KIND": "unknown"}):
+            with self.assertRaisesRegex(ValueError, "Unknown recovery kind"):
+                self.recover()
+        self.assertEqual(self.remote_main(), self.source)
 
     def test_requires_main_push_context(self):
         with mock.patch.dict(os.environ, {"GITHUB_EVENT_NAME": "workflow_dispatch"}):

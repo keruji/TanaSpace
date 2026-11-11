@@ -18,6 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    outputs:
+      python_test_exit_code: ${{ steps.python-tests.outputs.exit_code || steps.helper-tests.outputs.exit_code }}
+      python_tests_failed: >-
+        ${{ (steps.python-tests.outcome == 'failure' && steps.python-tests.outputs.exit_code == '1') ||
+            (steps.helper-tests.outcome == 'failure' && steps.helper-tests.outputs.exit_code == '1') }}
+
     services:
       postgres:
         image: postgres:17-alpine
@@ -53,6 +59,7 @@ jobs:
           bash -n scripts/deploy-release.sh
           bash -n scripts/preview-recovery.sh
           bash -n scripts/rehearse-recovery.sh
+          bash -n scripts/inspect-production.sh
           sh -n scripts/start-production.sh
 
       - name: Set up Python
@@ -63,7 +70,12 @@ jobs:
           cache-dependency-path: requirements.txt
 
       - name: Test deployment and recovery helpers
-        run: python -m unittest discover -s scripts -p 'test_*.py' -v
+        id: helper-tests
+        run: |
+          status=0
+          python -m unittest discover -s scripts -p 'test_*.py' -v || status=$?
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          exit "$status"
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -91,7 +103,12 @@ jobs:
         run: python manage.py migrate --noinput
 
       - name: Run Python tests
-        run: python manage.py test --noinput --verbosity 2
+        id: python-tests
+        run: |
+          status=0
+          python manage.py test --noinput --verbosity 2 || status=$?
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          exit "$status"
 
   publish:
     name: Publish application image
@@ -164,4 +181,17 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     with:
       image: ${{ needs.publish.outputs.image }}
+    secrets: inherit
+
+  recover-tests:
+    name: Recover failed merged tests
+    needs: checks
+    if: >-
+      ${{ always() && !cancelled() && github.event_name == 'push' &&
+          github.ref == 'refs/heads/main' && needs.checks.result == 'failure' &&
+          needs.checks.outputs.python_tests_failed == 'true' &&
+          !contains(github.event.head_commit.message, 'TanaSpace-Recovery: revert') }}
+    uses: ./.github/workflows/recover-tests.yml
+    with:
+      test_exit_code: ${{ needs.checks.outputs.python_test_exit_code }}
     secrets: inherit
