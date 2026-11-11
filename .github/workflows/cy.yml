@@ -50,6 +50,7 @@ jobs:
       - name: Check deployment script syntax
         run: |
           bash -n scripts/check-release.sh
+          bash -n scripts/deploy-release.sh
           sh -n scripts/start-production.sh
 
       - name: Set up Python
