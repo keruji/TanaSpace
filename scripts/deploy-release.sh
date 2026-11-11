@@ -81,6 +81,7 @@ compose=(
 
 work_dir=$(mktemp -d "$release_state/deployment.XXXXXX")
 switched=0
+deployment_stage=preflight
 
 wait_for_url() {
   local path=$1
@@ -131,29 +132,74 @@ verify_previous_image() {
   fi
 }
 
+write_result() {
+  python3 - "$source_dir/deployment-result.json" "$1" "$2" \
+    "$deployment_stage" "$test_rollback" "$expected_commit" \
+    "$candidate_image" "$previous_image" <<'PYTHON'
+import json
+import os
+from pathlib import Path
+import sys
+import tempfile
+
+path = Path(sys.argv[1])
+result = {
+    "schema_version": 1,
+    "outcome": sys.argv[2],
+    "exit_code": int(sys.argv[3]),
+    "stage": sys.argv[4],
+    "test_rollback": sys.argv[5] == "true",
+    "source_commit": sys.argv[6],
+    "candidate_image": sys.argv[7],
+    "previous_image": sys.argv[8],
+}
+with tempfile.NamedTemporaryFile(
+    mode="w", dir=path.parent, prefix=".deployment-result-", delete=False
+) as output:
+    json.dump(result, output, indent=2)
+    output.write("\n")
+    temporary_path = output.name
+os.replace(temporary_path, path)
+PYTHON
+}
+
 finish() {
   local result=$1
+  local outcome=stopped_before_switch
   trap - EXIT INT TERM
+  set +e
 
-  if (( result != 0 && switched == 1 )); then
-    set +e
+  if (( result == 0 )); then
+    outcome=deployed
+  elif (( switched == 1 )); then
     echo "Deployment failed. Restoring the previous application image."
 
     "${compose[@]}" logs --no-color --tail 80 app
-
     export APP_IMAGE="$previous_image"
 
     if start_app &&
-      verify_previous_image &&
-      "${compose[@]}" restart proxy &&
-      wait_for_url "$previous_health_path" &&
-      wait_for_url /static/app.css &&
-      wait_for_url /static/app.js &&
-      record_release "$previous_image" "$previous_id" "$previous_health_path"; then
+       verify_previous_image &&
+       "${compose[@]}" restart proxy &&
+       wait_for_url "$previous_health_path" &&
+       wait_for_url /static/app.css &&
+       wait_for_url /static/app.js &&
+       record_release "$previous_image" "$previous_id" "$previous_health_path"; then
+      outcome=rolled_back
+      if [[ "$test_rollback" == true ]]; then
+        outcome=rollback_test_passed
+      fi
       echo "Previous release restored and verified."
     else
+      outcome=rollback_failed
       echo "RECOVERY FAILED: manual investigation is required."
     fi
+  fi
+
+  if write_result "$outcome" "$result"; then
+    echo "Deployment result recorded: $outcome"
+  else
+    echo "ERROR: could not record the deployment result."
+    result=1
   fi
 
   rm -rf -- "$work_dir"
@@ -217,27 +263,34 @@ wait_for_url "$previous_health_path"
 
 echo "Switching application image..."
 switched=1
+deployment_stage=starting_application
 start_app
 
+deployment_stage=verifying_image
 actual_id=$(docker inspect tanaspace_prod-app-1 --format '{{.Image}}')
 if [[ "$actual_id" != "$candidate_id" ]]; then
   echo "The running application does not match the candidate image."
   exit 1
 fi
 
+deployment_stage=restarting_proxy
 echo "Restarting Nginx to refresh the application connection..."
 "${compose[@]}" restart proxy
 
 echo "Verifying application readiness and frontend assets..."
+deployment_stage=verifying_application
 wait_for_url /health/
+deployment_stage=verifying_assets
 wait_for_url /static/app.css
 wait_for_url /static/app.js
 
 if [[ "$test_rollback" == true ]]; then
+  deployment_stage=testing_rollback
   echo "Intentional deployment failure: testing rollback."
   exit 1
 fi
 
+deployment_stage=recording_release
 echo "Recording successful release..."
 record_release "$candidate_image" "$candidate_id" /health/
 
