@@ -1,0 +1,117 @@
+name: Check production release
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: "Full image reference: ghcr.io/keruji/tanaspace@sha256:..."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: Check candidate release
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Transfer and check candidate release
+        shell: bash
+        env:
+          CANDIDATE_IMAGE: ${{ inputs.image }}
+          SSH_HOST: ${{ vars.SSH_HOST }}
+          SSH_PORT: ${{ vars.SSH_PORT }}
+          SSH_USER: ${{ vars.SSH_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+
+          : "${SSH_HOST:?Missing SSH_HOST}"
+          : "${SSH_PORT:?Missing SSH_PORT}"
+          : "${SSH_USER:?Missing SSH_USER}"
+          : "${DEPLOY_PATH:?Missing DEPLOY_PATH}"
+          : "${SSH_PRIVATE_KEY:?Missing SSH_PRIVATE_KEY}"
+          : "${SSH_KNOWN_HOSTS:?Missing SSH_KNOWN_HOSTS}"
+
+          if [[ ! "$CANDIDATE_IMAGE" =~ ^ghcr\.io/keruji/tanaspace@sha256:[a-f0-9]{64}$ ]]; then
+            echo "Provide a complete image reference pinned by digest."
+            exit 1
+          fi
+
+          ssh_dir=$(mktemp -d "$RUNNER_TEMP/tanaspace-ssh.XXXXXX")
+          trap 'rm -rf "$ssh_dir"' EXIT
+
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$ssh_dir/key"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          chmod 600 "$ssh_dir/key" "$ssh_dir/known_hosts"
+
+          ssh_options=(
+            -i "$ssh_dir/key"
+            -p "$SSH_PORT"
+            -o IdentitiesOnly=yes
+            -o BatchMode=yes
+            -o StrictHostKeyChecking=yes
+            -o UserKnownHostsFile="$ssh_dir/known_hosts"
+            -o ConnectTimeout=15
+          )
+
+          target="$SSH_USER@$SSH_HOST"
+
+          remote_dir=$(ssh "${ssh_options[@]}" "$target" '
+            set -eu
+            umask 077
+            mkdir -p /home/keruji/.local/state/tanaspace/preflight
+            mktemp -d /home/keruji/.local/state/tanaspace/preflight/run.XXXXXX
+          ')
+
+          printf -v extract_command 'tar -xzf - -C %q' "$remote_dir"
+
+          tar -czf - \
+            compose.production.yml \
+            deploy/nginx.conf \
+            scripts/check-release.sh \
+            | ssh "${ssh_options[@]}" "$target" "$extract_command"
+
+          printf -v check_command 'bash -s -- %q %q %q %q' \
+            "$remote_dir" "$DEPLOY_PATH" "$CANDIDATE_IMAGE" "$GITHUB_SHA"
+
+          ssh "${ssh_options[@]}" "$target" "$check_command" <<'REMOTE'
+          set -euo pipefail
+
+          release_dir=$1
+          deployment_path=$2
+          candidate_image=$3
+          expected_commit=$4
+
+          exec 9>/home/keruji/.local/state/tanaspace/deployment.lock
+          flock -w 30 9
+
+          export PRODUCTION_ENV_FILE="$deployment_path/.env.production"
+
+          docker pull "$candidate_image"
+
+          image_commit=$(docker image inspect "$candidate_image" \
+            --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')
+
+          if [[ "$image_commit" != "$expected_commit" ]]; then
+            echo "STOP: the image does not match this workflow's source commit."
+            echo "Choose the image published for the current main commit."
+            exit 1
+          fi
+
+          bash "$release_dir/scripts/check-release.sh" "$candidate_image"
+          REMOTE
