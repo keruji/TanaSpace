@@ -1,0 +1,129 @@
+name: Deploy production
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: "Full image reference: ghcr.io/keruji/tanaspace@sha256:..."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy and verify application
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Transfer release files and deploy
+        shell: bash
+        env:
+          CANDIDATE_IMAGE: ${{ inputs.image }}
+          SSH_HOST: ${{ vars.SSH_HOST }}
+          SSH_PORT: ${{ vars.SSH_PORT }}
+          SSH_USER: ${{ vars.SSH_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+
+          : "${SSH_HOST:?Missing SSH_HOST}"
+          : "${SSH_PORT:?Missing SSH_PORT}"
+          : "${SSH_USER:?Missing SSH_USER}"
+          : "${DEPLOY_PATH:?Missing DEPLOY_PATH}"
+          : "${PRODUCTION_URL:?Missing PRODUCTION_URL}"
+          : "${SSH_PRIVATE_KEY:?Missing SSH_PRIVATE_KEY}"
+          : "${SSH_KNOWN_HOSTS:?Missing SSH_KNOWN_HOSTS}"
+
+          if [[ ! "$CANDIDATE_IMAGE" =~ ^ghcr\.io/keruji/tanaspace@sha256:[a-f0-9]{64}$ ]]; then
+            echo "Provide a complete image reference pinned by digest."
+            exit 1
+          fi
+
+          ssh_dir=$(mktemp -d "$RUNNER_TEMP/tanaspace-ssh.XXXXXX")
+          trap 'rm -rf "$ssh_dir"' EXIT
+
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$ssh_dir/key"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          chmod 600 "$ssh_dir/key" "$ssh_dir/known_hosts"
+
+          ssh_options=(
+            -i "$ssh_dir/key"
+            -p "$SSH_PORT"
+            -o IdentitiesOnly=yes
+            -o BatchMode=yes
+            -o StrictHostKeyChecking=yes
+            -o UserKnownHostsFile="$ssh_dir/known_hosts"
+            -o ConnectTimeout=15
+            -o ServerAliveInterval=15
+            -o ServerAliveCountMax=3
+          )
+
+          target="$SSH_USER@$SSH_HOST"
+
+          remote_dir=$(ssh "${ssh_options[@]}" "$target" '
+            set -eu
+            umask 077
+            mkdir -p /home/keruji/.local/state/tanaspace/releases
+            mktemp -d /home/keruji/.local/state/tanaspace/releases/run.XXXXXX
+          ')
+
+          printf -v extract_command 'tar -xzf - -C %q' "$remote_dir"
+
+          tar -czf - \
+            compose.production.yml \
+            deploy/nginx.conf \
+            scripts/check-release.sh \
+            scripts/deploy-release.sh \
+            | ssh "${ssh_options[@]}" "$target" "$extract_command"
+
+          printf -v deploy_command 'bash -s -- %q %q %q %q %q' \
+            "$remote_dir" \
+            "$DEPLOY_PATH" \
+            "$CANDIDATE_IMAGE" \
+            "$GITHUB_SHA" \
+            "$PRODUCTION_URL"
+
+          ssh "${ssh_options[@]}" "$target" "$deploy_command" <<'REMOTE'
+          set -euo pipefail
+
+          release_dir=$1
+          export DEPLOY_PATH=$2
+          candidate_image=$3
+          expected_commit=$4
+          export PRODUCTION_URL=$5
+
+          bash "$release_dir/scripts/deploy-release.sh" \
+            "$candidate_image" "$expected_commit"
+          REMOTE
+
+      - name: Record deployment summary
+        env:
+          IMAGE: ${{ inputs.image }}
+          SITE_URL: ${{ vars.PRODUCTION_URL }}
+        run: |
+          {
+            echo "## Production deployment succeeded"
+            echo ""
+            echo "Commit: $GITHUB_SHA"
+            echo ""
+            echo "Image: $IMAGE"
+            echo ""
+            echo "Website: $SITE_URL"
+          } >> "$GITHUB_STEP_SUMMARY"
