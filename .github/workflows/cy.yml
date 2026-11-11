@@ -95,6 +95,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    outputs:
+      image: ${{ steps.release.outputs.image }}
+
     permissions:
       contents: read
       packages: write
@@ -129,9 +132,12 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
 
       - name: Record published release
+        id: release
         env:
           IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
         run: |
+          echo "image=$IMAGE_NAME@$IMAGE_DIGEST" >> "$GITHUB_OUTPUT"
+
           {
             echo "## Published application image"
             echo ""
@@ -141,3 +147,12 @@ jobs:
             echo ""
             echo "Exact image: $IMAGE_NAME@$IMAGE_DIGEST"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy production
+    needs: publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy.yml
+    with:
+      image: ${{ needs.publish.outputs.image }}
+    secrets: inherit

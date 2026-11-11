@@ -13,6 +13,13 @@ on:
         default: false
         type: boolean
 
+  workflow_call:
+    inputs:
+      image:
+        description: "Application image pinned by digest"
+        required: true
+        type: string
+
 permissions:
   contents: read
 
@@ -34,6 +41,28 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Check that this release is still current
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          latest_sha=$(
+            curl --fail --silent --show-error \
+              --connect-timeout 10 --max-time 30 \
+              --header "Authorization: Bearer $GH_TOKEN" \
+              --header "Accept: application/vnd.github+json" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/heads/main" \
+              | python3 -c 'import json, sys; print(json.load(sys.stdin)["object"]["sha"])'
+          )
+
+          if [[ "$latest_sha" != "$GITHUB_SHA" ]]; then
+            echo "STOP: main has advanced beyond this release."
+            echo "Run deployment for the newest commit instead."
+            exit 1
+          fi
+
       - name: Transfer release files and deploy
         shell: bash
         env:
@@ -45,7 +74,7 @@ jobs:
           PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
-          TEST_ROLLBACK: ${{ inputs.test_rollback }}
+          TEST_ROLLBACK: ${{ inputs.test_rollback || false }}
         run: |
           set -euo pipefail
 
