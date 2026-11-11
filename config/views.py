@@ -1,3 +1,5 @@
+import os
+
 from django.db import DatabaseError, connection
 from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
@@ -7,6 +9,13 @@ from django.views.decorators.http import require_GET
 @never_cache
 @require_GET
 def health(request):
+    # Temporary fault for testing automatic repository recovery.
+    if os.environ.get("DJANGO_DEBUG", "true").lower() == "false":
+        return JsonResponse(
+            {"status": "intentional-recovery-test"},
+            status=503,
+        )
+
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
