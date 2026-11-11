@@ -1,0 +1,61 @@
+name: Test recovery App
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  authenticate:
+    name: Verify recovery App access
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+
+    steps:
+      - name: Create temporary App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.RECOVERY_APP_ID }}
+          private-key: ${{ secrets.RECOVERY_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-workflows: write
+
+      - name: Verify repository access
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+
+          echo "Checking token repository scope..."
+          accessible_repository=$(
+            gh api installation/repositories \
+              --jq '.repositories[].full_name'
+          )
+
+          if [[ "${accessible_repository,,}" != "${GITHUB_REPOSITORY,,}" ]]; then
+            echo "Unexpected repository access scope."
+            exit 1
+          fi
+
+          echo "Repository scope verified."
+
+          echo "Checking access to main..."
+          main_sha=$(
+            gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" \
+              --jq '.object.sha'
+          )
+          echo "Current main commit: $main_sha"
+
+          echo "Checking pull request access..."
+          gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=1" \
+            --jq '"Pull request API accessible."'
+
+          echo "Recovery App authentication checks passed."
