@@ -110,6 +110,18 @@ start_app() {
     --force-recreate --wait --wait-timeout 120 app
 }
 
+verify_previous_image() {
+  local restored_id
+
+  restored_id=$(docker inspect tanaspace_prod-app-1 \
+    --format '{{.Image}}') || return 1
+
+  if [[ "$restored_id" != "$previous_id" ]]; then
+    echo "Restored container does not match the previous image."
+    return 1
+  fi
+}
+
 finish() {
   local result=$1
   trap - EXIT INT TERM
@@ -123,6 +135,7 @@ finish() {
     export APP_IMAGE="$previous_image"
 
     if start_app &&
+       verify_previous_image &&
        "${compose[@]}" restart proxy &&
        wait_for_url "$previous_health_path" &&
        wait_for_url /static/app.css &&
@@ -173,9 +186,8 @@ if configs[0] != configs[1]:
     )
 PYTHON
 
-echo "Running release preflight..."
-PRODUCTION_ENV_FILE="$production_env" \
-  bash "$source_dir/scripts/check-release.sh" "$candidate_image"
+echo "Downloading candidate image for identity verification..."
+docker pull "$candidate_image"
 
 image_commit=$(docker image inspect "$candidate_image" \
   --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')
@@ -184,6 +196,10 @@ if [[ "$image_commit" != "$expected_commit" ]]; then
   echo "STOP: candidate image does not match the expected source commit."
   exit 1
 fi
+
+echo "Running release preflight..."
+PRODUCTION_ENV_FILE="$production_env" \
+  bash "$source_dir/scripts/check-release.sh" "$candidate_image"
 
 candidate_id=$(docker image inspect "$candidate_image" --format '{{.Id}}')
 
