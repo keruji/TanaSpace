@@ -7,6 +7,11 @@ on:
         description: "Full image reference: ghcr.io/keruji/tanaspace@sha256:..."
         required: true
         type: string
+      test_rollback:
+        description: "Deliberately fail after verification to test rollback"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -40,6 +45,7 @@ jobs:
           PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          TEST_ROLLBACK: ${{ inputs.test_rollback }}
         run: |
           set -euo pipefail
 
@@ -93,12 +99,13 @@ jobs:
             scripts/deploy-release.sh \
             | ssh "${ssh_options[@]}" "$target" "$extract_command"
 
-          printf -v deploy_command 'bash -s -- %q %q %q %q %q' \
+          printf -v deploy_command 'bash -s -- %q %q %q %q %q %q' \
             "$remote_dir" \
             "$DEPLOY_PATH" \
             "$CANDIDATE_IMAGE" \
             "$GITHUB_SHA" \
-            "$PRODUCTION_URL"
+            "$PRODUCTION_URL" \
+            "$TEST_ROLLBACK"
 
           ssh "${ssh_options[@]}" "$target" "$deploy_command" <<'REMOTE'
           set -euo pipefail
@@ -108,6 +115,7 @@ jobs:
           candidate_image=$3
           expected_commit=$4
           export PRODUCTION_URL=$5
+          export TEST_ROLLBACK=$6
 
           bash "$release_dir/scripts/deploy-release.sh" \
             "$candidate_image" "$expected_commit"

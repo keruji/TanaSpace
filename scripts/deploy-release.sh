@@ -4,6 +4,15 @@ umask 077
 
 candidate_image=${1:-}
 expected_commit=${2:-}
+test_rollback=${TEST_ROLLBACK:-false}
+
+case "$test_rollback" in
+  true|false) ;;
+  *)
+    echo "TEST_ROLLBACK must be true or false."
+    exit 1
+    ;;
+esac
 
 if [[ ! "$candidate_image" =~ ^ghcr\.io/keruji/tanaspace@sha256:[a-f0-9]{64}$ ]]; then
   echo "Provide a complete application image reference pinned by digest."
@@ -135,12 +144,12 @@ finish() {
     export APP_IMAGE="$previous_image"
 
     if start_app &&
-       verify_previous_image &&
-       "${compose[@]}" restart proxy &&
-       wait_for_url "$previous_health_path" &&
-       wait_for_url /static/app.css &&
-       wait_for_url /static/app.js &&
-       record_release "$previous_image" "$previous_id" "$previous_health_path"; then
+      verify_previous_image &&
+      "${compose[@]}" restart proxy &&
+      wait_for_url "$previous_health_path" &&
+      wait_for_url /static/app.css &&
+      wait_for_url /static/app.js &&
+      record_release "$previous_image" "$previous_id" "$previous_health_path"; then
       echo "Previous release restored and verified."
     else
       echo "RECOVERY FAILED: manual investigation is required."
@@ -223,6 +232,11 @@ echo "Verifying application readiness and frontend assets..."
 wait_for_url /health/
 wait_for_url /static/app.css
 wait_for_url /static/app.js
+
+if [[ "$test_rollback" == true ]]; then
+  echo "Intentional deployment failure: testing rollback."
+  exit 1
+fi
 
 echo "Recording successful release..."
 record_release "$candidate_image" "$candidate_id" /health/
