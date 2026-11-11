@@ -180,6 +180,47 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      - name: Create repository recovery token
+        id: recovery-token
+        if: >-
+          ${{ failure() && !cancelled() && github.event_name == 'push' &&
+              vars.ENABLE_REPOSITORY_RECOVERY == 'true' &&
+              steps.deployment.outputs.report_valid == 'true' &&
+              steps.deployment.outputs.outcome == 'rolled_back' &&
+              steps.deployment.outputs.rollback_test == 'false' &&
+              steps.deployment.outputs.previous_commit != '' &&
+              !contains(github.event.head_commit.message, 'TanaSpace-Recovery: revert') }}
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.RECOVERY_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RECOVERY_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-workflows: write
+
+      - name: Check out history for repository recovery
+        id: recovery-checkout
+        if: >-
+          ${{ failure() && !cancelled() && steps.recovery-token.outcome == 'success' }}
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          token: ${{ steps.recovery-token.outputs.token }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Revert failed change and open replacement PR
+        if: >-
+          ${{ failure() && !cancelled() && steps.recovery-checkout.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ steps.recovery-token.outputs.token }}
+          CANDIDATE_IMAGE: ${{ inputs.image }}
+          DEPLOYMENT_EXIT_CODE: ${{ steps.deployment.outputs.exit_code }}
+          FAILURE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 scripts/recover-repository.py "$RUNNER_TEMP/deployment-result.json"
+
       - name: Record deployment summary
         env:
           IMAGE: ${{ inputs.image }}

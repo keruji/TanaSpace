@@ -31,6 +31,10 @@ def validate(report, commit, image, test_mode, ssh_status):
     if not isinstance(report.get("previous_image"), str) or not report["previous_image"]:
         raise ValueError("previous image is missing")
 
+    previous_commit = report.get("previous_commit", "")
+    if not isinstance(previous_commit, str) or (previous_commit and not re.fullmatch(r"[a-f0-9]{40}", previous_commit)):
+        raise ValueError("invalid previous source commit")
+
     outcome = report.get("outcome")
     stage = report.get("stage")
     switched_stages = {
@@ -60,6 +64,7 @@ def validate(report, commit, image, test_mode, ssh_status):
         "source_commit": commit,
         "rollback_test": test_mode,
         "exit_code": str(status),
+        "previous_commit": previous_commit,
     }
 
 
