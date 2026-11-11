@@ -1,0 +1,56 @@
+name: Rehearse repository recovery
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  rehearsal:
+    name: Test recovery branches and draft PR
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+
+    steps:
+      - name: Create temporary App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.RECOVERY_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RECOVERY_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-workflows: write
+
+      - name: Check out repository history
+        uses: actions/checkout@v6
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Construct recovery commits
+        id: preview
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: bash scripts/preview-recovery.sh "$GITHUB_SHA"
+
+      - name: Publish rehearsal branches and draft PR
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ORIGINAL_PR: ${{ steps.preview.outputs.original_pr }}
+          SOURCE_COMMIT: ${{ steps.preview.outputs.source_commit }}
+          REVERT_COMMIT: ${{ steps.preview.outputs.revert_commit }}
+          REAPPLY_COMMIT: ${{ steps.preview.outputs.reapply_commit }}
+        run: bash scripts/rehearse-recovery.sh
