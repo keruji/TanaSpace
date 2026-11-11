@@ -19,7 +19,7 @@ The production configuration is `compose.production.yml`.
 GitHub Actions will connect to the server through SSH.
 
 Server address: 66.181.46.66
-SSH username: kruji
+SSH username: keruji
 Deployment directory: /opt/tanaspace
 Public website URL: https://tanaspace.dpdns.org/
 
