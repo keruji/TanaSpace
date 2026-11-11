@@ -1,0 +1,119 @@
+name: Recover failed merged tests
+
+on:
+  workflow_call:
+    inputs:
+      test_exit_code:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    name: Verify production and recover repository
+    if: ${{ always() && !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+
+    steps:
+      - name: Check recovery activation
+        id: activation
+        shell: bash
+        env:
+          RECOVERY_ENABLED: ${{ vars.ENABLE_REPOSITORY_RECOVERY }}
+          TEST_EXIT_CODE: ${{ inputs.test_exit_code }}
+        run: |
+          set -euo pipefail
+          if [[ "$RECOVERY_ENABLED" == true && "$TEST_EXIT_CODE" == 1 ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Repository recovery is disabled or this is not an eligible test failure."
+          fi
+
+      - name: Create recovery App token
+        id: app-token
+        if: steps.activation.outputs.enabled == 'true'
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.RECOVERY_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RECOVERY_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-workflows: write
+
+      - name: Check out failed source and history
+        if: steps.activation.outputs.enabled == 'true'
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Verify production without replacing containers
+        if: steps.activation.outputs.enabled == 'true'
+        shell: bash
+        env:
+          SSH_HOST: ${{ vars.SSH_HOST }}
+          SSH_PORT: ${{ vars.SSH_PORT }}
+          SSH_USER: ${{ vars.SSH_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          : "${SSH_HOST:?Missing SSH_HOST}"
+          : "${SSH_PORT:?Missing SSH_PORT}"
+          : "${SSH_USER:?Missing SSH_USER}"
+          : "${DEPLOY_PATH:?Missing DEPLOY_PATH}"
+          : "${PRODUCTION_URL:?Missing PRODUCTION_URL}"
+          : "${SSH_PRIVATE_KEY:?Missing SSH_PRIVATE_KEY}"
+          : "${SSH_KNOWN_HOSTS:?Missing SSH_KNOWN_HOSTS}"
+
+          ssh_dir=$(mktemp -d "$RUNNER_TEMP/tanaspace-ssh.XXXXXX")
+          trap 'rm -rf "$ssh_dir"' EXIT
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$ssh_dir/key"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          chmod 600 "$ssh_dir/key" "$ssh_dir/known_hosts"
+
+          printf -v inspect_command 'bash -s -- %q %q %q' \
+            "$GITHUB_SHA" "$DEPLOY_PATH" "$PRODUCTION_URL"
+
+          ssh \
+            -i "$ssh_dir/key" -p "$SSH_PORT" \
+            -o IdentitiesOnly=yes -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$ssh_dir/known_hosts" \
+            -o ConnectTimeout=15 \
+            "$SSH_USER@$SSH_HOST" "$inspect_command" \
+            < scripts/inspect-production.sh \
+            > "$RUNNER_TEMP/test-failure-report.json"
+
+      - name: Revert failed tests and open replacement PR
+        if: steps.activation.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RECOVERY_KIND: tests
+          TEST_EXIT_CODE: ${{ inputs.test_exit_code }}
+          FAILURE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 scripts/recover-repository.py "$RUNNER_TEMP/test-failure-report.json"
+
+      - name: Save production verification report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-failure-production-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/test-failure-report.json
+          if-no-files-found: ignore
+          retention-days: 14

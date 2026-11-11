@@ -1,4 +1,4 @@
-"""Recover main after a verified application rollback, then open a draft PR."""
+"""Recover main after a verified deployment or post-merge test failure."""
 import importlib.util
 import json
 import os
@@ -44,28 +44,63 @@ def recover(report_path):
     require_environment("GH_TOKEN")
     repository = require_environment("GITHUB_REPOSITORY")
     source = require_environment("GITHUB_SHA")
-    image = require_environment("CANDIDATE_IMAGE")
-    exit_code = int(require_environment("DEPLOYMENT_EXIT_CODE"))
     run_url = require_environment("FAILURE_RUN_URL")
     if not re.fullmatch(r"https://github\.com/" + re.escape(repository) + r"/actions/runs/[0-9]+", run_url):
         raise ValueError("Failure URL must identify a workflow run in this repository.")
 
-    spec = importlib.util.spec_from_file_location(
-        "deployment_report", Path(__file__).with_name("read-deployment-result.py")
-    )
-    reader = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(reader)
     report = json.loads(Path(report_path).read_text())
-    reader.validate(report, source, image, "false", exit_code)
-    if report["outcome"] != "rolled_back" or exit_code in (0, 130, 143):
-        raise ValueError("Recovery requires a verified non-test rollback after failure.")
-    if report["stage"] not in {
-        "starting_application", "verifying_image", "verifying_application", "verifying_assets"
-    }:
-        raise ValueError("This failure stage requires investigation rather than automatic code recovery.")
-    previous = report.get("previous_commit", "")
-    if not re.fullmatch(r"[a-f0-9]{40}", previous):
-        raise ValueError("The restored image's source commit is unknown.")
+    kind = os.environ.get("RECOVERY_KIND", "deployment")
+    if kind == "deployment":
+        image = require_environment("CANDIDATE_IMAGE")
+        exit_code = int(require_environment("DEPLOYMENT_EXIT_CODE"))
+        spec = importlib.util.spec_from_file_location(
+            "deployment_report", Path(__file__).with_name("read-deployment-result.py")
+        )
+        reader = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(reader)
+        reader.validate(report, source, image, "false", exit_code)
+        if report["outcome"] != "rolled_back" or exit_code in (0, 130, 143):
+            raise ValueError("Recovery requires a verified non-test rollback after failure.")
+        if report["stage"] not in {
+            "starting_application", "verifying_image", "verifying_application", "verifying_assets"
+        }:
+            raise ValueError("This failure stage requires investigation rather than automatic code recovery.")
+        previous = report.get("previous_commit", "")
+        failure_label = "deployment failed"
+        failure_description = (
+            "Deployment failed. The previous production release was restored and verified."
+        )
+    elif kind == "tests":
+        if require_environment("TEST_EXIT_CODE") != "1":
+            raise ValueError("Test recovery requires the Python test command to exit with code 1.")
+        valid = (
+            isinstance(report, dict)
+            and type(report.get("schema_version")) is int
+            and report["schema_version"] == 1
+            and report.get("outcome") == "unchanged_healthy"
+            and report.get("stage") == "python_tests"
+            and report.get("failed_commit") == source
+            and report.get("health_ok") is True
+            and report.get("assets_ok") is True
+            and isinstance(report.get("current_image"), str)
+            and bool(report["current_image"])
+            and isinstance(report.get("current_image_id"), str)
+            and re.fullmatch(r"sha256:[a-f0-9]{64}", report["current_image_id"])
+        )
+        if not valid:
+            raise ValueError("Production snapshot is missing, invalid, or unhealthy.")
+        previous = report.get("current_commit", "")
+        failure_label = "tests failed"
+        failure_description = (
+            "Python tests failed after merge. Production remained on its verified healthy "
+            "release and was not redeployed."
+        )
+    else:
+        raise ValueError("Unknown recovery kind.")
+    if not isinstance(previous, str) or not re.fullmatch(r"[a-f0-9]{40}", previous):
+        raise ValueError("The verified production image's source commit is unknown.")
+    if not re.fullmatch(r"[a-f0-9]{40}", source):
+        raise ValueError("Invalid failed source commit.")
 
     parents = git("rev-list", "--parents", "-n", "1", source).split()
     if len(parents) != 2:
@@ -74,7 +109,7 @@ def recover(report_path):
     if "TanaSpace-Recovery: revert" in git("show", "-s", "--format=%B", source):
         raise ValueError("A recovery revert cannot trigger another recovery.")
     if git("rev-parse", f"{previous}^{{tree}}") != git("rev-parse", f"{parent}^{{tree}}"):
-        raise ValueError("Restored production files differ from the proposed main recovery target.")
+        raise ValueError("Verified production files differ from the proposed main recovery target.")
 
     pulls = github_json("api", f"repos/{repository}/commits/{source}/pulls?per_page=100")
     matches = [pr for pr in pulls
@@ -87,6 +122,14 @@ def recover(report_path):
     if original_pr < 1:
         raise ValueError("Invalid original PR number.")
     branch = f"recovery/reapply-{original_pr}-{source[:12]}"
+    revert_title = (
+        f"revert: recover deployment for #{original_pr}" if kind == "deployment"
+        else f"revert: recover failed tests for #{original_pr}"
+    )
+    reapply_title = (
+        f"fix: reapply #{original_pr} after failed deployment" if kind == "deployment"
+        else f"fix: reapply #{original_pr} after failed tests"
+    )
 
     with tempfile.TemporaryDirectory(prefix="tanaspace-recovery-") as temporary:
         worktree = Path(temporary) / "worktree"
@@ -100,14 +143,14 @@ def recover(report_path):
                               GIT_COMMITTER_EMAIL="recovery@users.noreply.github.com",
                               GIT_AUTHOR_DATE=date, GIT_COMMITTER_DATE=date)
             git("revert", "--no-commit", source, cwd=worktree, env=commit_env)
-            git("commit", "-m", f"revert: recover deployment for #{original_pr}",
+            git("commit", "-m", revert_title,
                 "-m", f"TanaSpace-Recovery: revert\nOriginal-Commit: {source}\nOriginal-PR: #{original_pr}",
                 cwd=worktree, env=commit_env)
             revert = git("rev-parse", "HEAD", cwd=worktree)
             if git("rev-parse", f"{revert}^{{tree}}") != git("rev-parse", f"{parent}^{{tree}}"):
                 raise ValueError("Revert does not reproduce the working file tree.")
             git("revert", "--no-commit", revert, cwd=worktree, env=commit_env)
-            git("commit", "-m", f"fix: reapply #{original_pr} after failed deployment",
+            git("commit", "-m", reapply_title,
                 "-m", f"Original-Commit: {source}", cwd=worktree, env=commit_env)
             reapply = git("rev-parse", "HEAD", cwd=worktree)
             if git("rev-parse", f"{reapply}^{{tree}}") != git("rev-parse", f"{source}^{{tree}}"):
@@ -129,17 +172,16 @@ def recover(report_path):
                     f"{reapply}:refs/heads/{branch}")
                 body = Path(temporary) / "pr.md"
                 body.write_text(
-                    f"Deployment of #{original_pr} failed and the previous application release "
-                    f"was restored and verified.\n\n"
+                    f"{failure_description}\n\n"
                     f"Original PR: https://github.com/{repository}/pull/{original_pr}\n"
                     f"Failed commit: {source}\n"
                     f"Failed workflow: {run_url}\n"
                     f"Recovery revert: {revert}\n\n"
-                    "This draft PR reapplies the original changes. Fix the deployment problem "
+                    "This draft PR reapplies the original changes. Fix the reported problem "
                     "here and wait for required checks before merging.\n"
                 )
                 pr_url = run_gh("pr", "create", "--repo", repository, "--draft", "--base", "main",
-                                "--head", branch, "--title", f"Reapply #{original_pr}: deployment failed",
+                                "--head", branch, "--title", f"Reapply #{original_pr}: {failure_label}",
                                 "--body-file", str(body))
             else:
                 pr_url = existing[0]["url"]
@@ -150,8 +192,7 @@ def recover(report_path):
             if not any(marker in (comment.get("body") or "") for page in pages for comment in page):
                 comment = Path(temporary) / "comment.md"
                 comment.write_text(
-                    f"{marker}\nDeployment failed: {run_url}\n\n"
-                    f"The previous production release was restored and verified. "
+                    f"{marker}\n{failure_description}\n\nFailed workflow: {run_url}\n\n"
                     f"Main received recovery revert {revert}.\n\n"
                     f"Replacement PR: {pr_url}\n"
                 )
