@@ -72,10 +72,6 @@ git worktree add --detach "$worktree" "$failed_commit"
 git -C "$worktree" config user.name "TanaSpace Recovery"
 git -C "$worktree" config user.email "recovery@users.noreply.github.com"
 
-commit_date=$(git show -s --format=%cI "$failed_commit")
-export GIT_AUTHOR_DATE="$commit_date"
-export GIT_COMMITTER_DATE="$commit_date"
-
 git -C "$worktree" revert --no-commit "$failed_commit"
 git -C "$worktree" commit \
   -m "revert: recover deployment for #$pr_number" \
@@ -97,15 +93,6 @@ if [[ "$(git -C "$worktree" rev-parse HEAD^{tree})" != "$(git rev-parse "$failed
 fi
 
 check_main
-
-if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
-  {
-    echo "original_pr=$pr_number"
-    echo "source_commit=$failed_commit"
-    echo "revert_commit=$revert_commit"
-    echo "reapply_commit=$reapply_commit"
-  } >> "$GITHUB_OUTPUT"
-fi
 
 {
   echo "## Recovery preview"
