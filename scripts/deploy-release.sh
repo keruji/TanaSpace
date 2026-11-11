@@ -50,6 +50,11 @@ flock -w 60 9
 
 previous_image=$(cat "$release_state/current-image")
 previous_id=$(cat "$release_state/current-image-id")
+previous_commit=$(docker image inspect "$previous_image" \
+  --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')
+if [[ ! "$previous_commit" =~ ^[a-f0-9]{40}$ ]]; then
+  previous_commit=""
+fi
 previous_health_path=/
 
 if [[ -f "$release_state/current-health-path" ]]; then
@@ -135,7 +140,7 @@ verify_previous_image() {
 write_result() {
   python3 - "$source_dir/deployment-result.json" "$1" "$2" \
     "$deployment_stage" "$test_rollback" "$expected_commit" \
-    "$candidate_image" "$previous_image" <<'PYTHON'
+    "$candidate_image" "$previous_image" "$previous_commit" <<'PYTHON'
 import json
 import os
 from pathlib import Path
@@ -152,6 +157,7 @@ result = {
     "source_commit": sys.argv[6],
     "candidate_image": sys.argv[7],
     "previous_image": sys.argv[8],
+    "previous_commit": sys.argv[9],
 }
 with tempfile.NamedTemporaryFile(
     mode="w", dir=path.parent, prefix=".deployment-result-", delete=False
