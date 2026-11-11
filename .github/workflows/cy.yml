@@ -51,6 +51,7 @@ jobs:
         run: |
           bash -n scripts/check-release.sh
           bash -n scripts/deploy-release.sh
+          bash -n scripts/preview-recovery.sh
           sh -n scripts/start-production.sh
 
       - name: Set up Python
