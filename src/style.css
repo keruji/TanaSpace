@@ -130,10 +130,104 @@ article.bg-slate-950 { background-color: var(--landing-quiet); }
   }
 
   html.landing-page main > section {
-    height: calc(100svh - var(--sticky-offset));
     min-height: calc(100svh - var(--sticky-offset));
-    scroll-margin-top: var(--sticky-offset);
     scroll-snap-align: start;
-    scroll-snap-stop: always;
+  }
+}
+
+.scroll-reveal-line {
+  display: block;
+}
+
+.scroll-reveal-ready > .scroll-reveal-line,
+[data-scroll-reveal="element"].scroll-reveal-ready {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+  transition-delay: var(--reveal-delay, 0s);
+}
+
+.scroll-reveal-ready.is-revealed > .scroll-reveal-line,
+[data-scroll-reveal="element"].scroll-reveal-ready.is-revealed,
+[data-scroll-reveal="element"].scroll-reveal-ready:focus-within {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.landing-page {
+    scroll-behavior: auto;
+  }
+
+  .scroll-reveal-ready > .scroll-reveal-line,
+  [data-scroll-reveal="element"].scroll-reveal-ready {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+.landing-footer {
+  padding: clamp(3rem, 6vw, 6rem) 1.5rem 2rem;
+  border-top: 1px solid var(--landing-line);
+  background: var(--landing-surface);
+}
+
+.landing-footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  max-width: 69rem;
+  margin-inline: auto;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--landing-line);
+}
+
+.landing-footer-copyright {
+  max-width: 69rem;
+  margin: 1.5rem auto 0;
+  color: var(--landing-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.landing-footer-brand {
+  color: var(--landing-text);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.landing-footer-brand .brand-logo {
+  width: 40px;
+  height: 40px;
+}
+
+.landing-footer-github {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--landing-soft);
+  color: var(--landing-muted);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.landing-footer-github:hover {
+  background: var(--landing-accent-soft);
+  color: var(--landing-accent-text);
+}
+
+.landing-footer a:focus-visible {
+  outline: 3px solid var(--landing-accent-text);
+  outline-offset: 4px;
+}
+
+@media (min-width: 1024px) and (min-height: 760px) {
+  .landing-footer {
+    scroll-snap-align: end;
   }
 }

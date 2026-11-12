@@ -68,25 +68,25 @@
   <main>
     <section class="mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 lg:grid-cols-2">
       <div>
-        <p
+        <p data-scroll-reveal="element"
           class="mb-4 inline-flex rounded-full border border-indigo-400/30
             bg-indigo-400/10 px-3 py-1 text-sm text-indigo-300"
         >
           Inventory, reminders, and planning in one place
         </p>
 
-        <h1 class="max-w-2xl text-5xl font-bold tracking-tight sm:text-6xl">
+        <h1 data-scroll-reveal class="max-w-2xl text-5xl font-bold tracking-tight sm:text-6xl">
           Keep track of what you own and what comes next.
         </h1>
 
-        <p class="mt-6 max-w-xl text-lg leading-8 text-slate-400">
+        <p data-scroll-reveal class="mt-6 max-w-xl text-lg leading-8 text-slate-400">
           TanaSpace helps you record items, remember expirations and
           warranties, plan grocery runs, save recipes, and organize
           future builds without scattering details across notes and
           spreadsheets.
         </p>
 
-        <div class="mt-8 flex flex-wrap gap-4">
+        <div data-scroll-reveal="element" class="mt-8 flex flex-wrap gap-4">
           <form method="post" action="{% url 'accounts:demo' %}">
             {% csrf_token %}
             <button type="submit"
@@ -106,14 +106,14 @@
         </div>
       </div>
 
-      <div class="rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-2xl shadow-indigo-950/40">
+      <div data-scroll-reveal="element" class="rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-2xl shadow-indigo-950/40">
         <div class="mb-6 flex items-center justify-between">
           <div>
-            <p class="font-semibold">
+            <p data-scroll-reveal class="font-semibold">
               Today in TanaSpace
             </p>
 
-            <p class="text-sm text-slate-400">
+            <p data-scroll-reveal class="text-sm text-slate-400">
               4 active lists and reminders
             </p>
           </div>
@@ -125,52 +125,52 @@
         </div>
 
         <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <article class="preview-item-card aspect-[3/4] rounded-xl p-4">
-            <p class="text-sm font-semibold">
+          <article data-scroll-reveal="element" class="preview-item-card aspect-[3/4] rounded-xl p-4">
+            <p data-scroll-reveal class="text-sm font-semibold">
               Laptop Warranty
             </p>
 
-            <p class="preview-item-meta mt-2 text-xs">
+            <p data-scroll-reveal class="preview-item-meta mt-2 text-xs">
               42 days left
             </p>
           </article>
 
-          <article class="preview-item-card aspect-[3/4] rounded-xl p-4">
-            <p class="text-sm font-semibold">
+          <article data-scroll-reveal="element" class="preview-item-card aspect-[3/4] rounded-xl p-4">
+            <p data-scroll-reveal class="text-sm font-semibold">
               Grocery Run
             </p>
 
-            <p class="preview-item-meta mt-2 text-xs">
+            <p data-scroll-reveal class="preview-item-meta mt-2 text-xs">
               12 items
             </p>
           </article>
 
-          <article class="preview-item-card aspect-[3/4] rounded-xl p-4">
-            <p class="text-sm font-semibold">
+          <article data-scroll-reveal="element" class="preview-item-card aspect-[3/4] rounded-xl p-4">
+            <p data-scroll-reveal class="text-sm font-semibold">
               Pantry
             </p>
 
-            <p class="preview-item-meta mt-2 text-xs">
+            <p data-scroll-reveal class="preview-item-meta mt-2 text-xs">
               3 expiring soon
             </p>
           </article>
 
-          <article class="preview-item-card aspect-[3/4] rounded-xl p-4">
-            <p class="text-sm font-semibold">
+          <article data-scroll-reveal="element" class="preview-item-card aspect-[3/4] rounded-xl p-4">
+            <p data-scroll-reveal class="text-sm font-semibold">
               Recipe Ideas
             </p>
 
-            <p class="preview-item-meta mt-2 text-xs">
+            <p data-scroll-reveal class="preview-item-meta mt-2 text-xs">
               8 saved
             </p>
           </article>
 
-          <article class="preview-item-card aspect-[3/4] rounded-xl p-4">
-            <p class="text-sm font-semibold">
+          <article data-scroll-reveal="element" class="preview-item-card aspect-[3/4] rounded-xl p-4">
+            <p data-scroll-reveal class="text-sm font-semibold">
               Future PC Build
             </p>
 
-            <p class="preview-item-meta mt-2 text-xs">
+            <p data-scroll-reveal class="preview-item-meta mt-2 text-xs">
               5 parts planned
             </p>
           </article>
@@ -189,15 +189,15 @@
 
     <section id="features" class="mx-auto max-w-6xl px-6 py-20">
       <div class="max-w-3xl">
-        <p class="text-sm font-semibold uppercase text-indigo-300">
+        <p data-scroll-reveal class="text-sm font-semibold uppercase text-indigo-300">
           Features
         </p>
 
-        <h2 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+        <h2 data-scroll-reveal class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
           A practical space for the things you own, use, and plan.
         </h2>
 
-        <p class="mt-4 leading-7 text-slate-400">
+        <p data-scroll-reveal class="mt-4 leading-7 text-slate-400">
           TanaSpace is designed around everyday records: items,
           reminders, groceries, recipes, computer builds, and other
           personal systems that are easier to manage when they live in
@@ -206,72 +206,72 @@
       </div>
 
       <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <article class="rounded-xl border border-slate-800 bg-slate-900 p-6">
-          <h3 class="font-semibold">
+        <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-900 p-6">
+          <h3 data-scroll-reveal class="font-semibold">
             Item Records
           </h3>
 
-          <p class="mt-3 text-sm leading-6 text-slate-400">
+          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
             Record devices, consumables, tools, supplies, or almost
             anything with details like item type, variant, size, weight,
             brand, notes, and photos later.
           </p>
         </article>
 
-        <article class="rounded-xl border border-slate-800 bg-slate-900 p-6">
-          <h3 class="font-semibold">
+        <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-900 p-6">
+          <h3 data-scroll-reveal class="font-semibold">
             Expiration and Warranty Reminders
           </h3>
 
-          <p class="mt-3 text-sm leading-6 text-slate-400">
+          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
             Add expiration dates, warranty periods, renewal dates, or
             service schedules so TanaSpace can remind you before
             something is wasted, forgotten, or out of coverage.
           </p>
         </article>
 
-        <article class="rounded-xl border border-slate-800 bg-slate-900 p-6">
-          <h3 class="font-semibold">
+        <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-900 p-6">
+          <h3 data-scroll-reveal class="font-semibold">
             Grocery Checklists
           </h3>
 
-          <p class="mt-3 text-sm leading-6 text-slate-400">
+          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
             Start from reusable grocery templates, then remove or add
             items for a specific scheduled grocery run without changing
             the original template.
           </p>
         </article>
 
-        <article class="rounded-xl border border-slate-800 bg-slate-900 p-6">
-          <h3 class="font-semibold">
+        <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-900 p-6">
+          <h3 data-scroll-reveal class="font-semibold">
             Recipe Collections
           </h3>
 
-          <p class="mt-3 text-sm leading-6 text-slate-400">
+          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
             Save recipes with ingredients, step-by-step instructions,
             estimated time, preparation notes, and the actions needed at
             each stage.
           </p>
         </article>
 
-        <article class="rounded-xl border border-slate-800 bg-slate-900 p-6">
-          <h3 class="font-semibold">
+        <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-900 p-6">
+          <h3 data-scroll-reveal class="font-semibold">
             PC Build Planner
           </h3>
 
-          <p class="mt-3 text-sm leading-6 text-slate-400">
+          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
             Record a current computer build, track components, and plan
             future builds with parts lists, upgrade ideas, and checklist
             progress.
           </p>
         </article>
 
-        <article class="rounded-xl border border-dashed border-slate-700 bg-slate-950 p-6">
-          <h3 class="font-semibold">
+        <article data-scroll-reveal="element" class="rounded-xl border border-dashed border-slate-700 bg-slate-950 p-6">
+          <h3 data-scroll-reveal class="font-semibold">
             More Tools Later
           </h3>
 
-          <p class="mt-3 text-sm leading-6 text-slate-400">
+          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
             The feature set can keep growing as the product becomes
             clearer, with new spaces for other routines, collections,
             and planning workflows.
@@ -282,15 +282,15 @@
 
     <section id="about" class="border-t border-slate-800 bg-slate-900/50">
       <div class="mx-auto max-w-6xl px-6 py-20">
-        <p class="text-sm font-semibold uppercase text-indigo-300">
+        <p data-scroll-reveal class="text-sm font-semibold uppercase text-indigo-300">
           About
         </p>
 
-        <h2 class="mt-3 max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl">
+        <h2 data-scroll-reveal class="mt-3 max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl">
           A personal space, built one step at a time.
         </h2>
 
-        <p class="mt-4 max-w-3xl leading-7 text-slate-400">
+        <p data-scroll-reveal class="mt-4 max-w-3xl leading-7 text-slate-400">
           TanaSpace now has a Django foundation with personal accounts and
           a dashboard. Inventory, reminders, and planning tools are next
           as your space grows.
@@ -300,15 +300,15 @@
 
     <section id="roadmap" class="border-t border-slate-800 bg-slate-900/50">
       <div class="mx-auto max-w-6xl px-6 py-20">
-        <p class="text-sm font-semibold uppercase text-indigo-300">
+        <p data-scroll-reveal class="text-sm font-semibold uppercase text-indigo-300">
           Roadmap
         </p>
 
-        <h2 class="mt-3 max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl">
+        <h2 data-scroll-reveal class="mt-3 max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl">
           From preview to a complete personal space platform.
         </h2>
 
-        <p class="mt-4 max-w-3xl leading-7 text-slate-400">
+        <p data-scroll-reveal class="mt-4 max-w-3xl leading-7 text-slate-400">
           The roadmap is organized around major product milestones:
           first shaping the landing page, then proving the frontend
           experience, adding the Django backend, preparing the release,
@@ -316,91 +316,91 @@
         </p>
 
         <div class="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <article class="rounded-xl border border-indigo-400/40 bg-indigo-400/10 p-5">
-            <p class="text-sm font-semibold uppercase text-indigo-300">
+          <article data-scroll-reveal="element" class="rounded-xl border border-indigo-400/40 bg-indigo-400/10 p-5">
+            <p data-scroll-reveal class="text-sm font-semibold uppercase text-indigo-300">
               Phase 01
             </p>
 
-            <h3 class="mt-3 font-semibold">
+            <h3 data-scroll-reveal class="mt-3 font-semibold">
               Landing Page
             </h3>
 
-            <p class="mt-3 text-sm leading-6 text-slate-400">
+            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
               Define the product message, feature direction, roadmap,
               and first public-facing page for TanaSpace.
             </p>
           </article>
 
-          <article class="rounded-xl border border-indigo-400/40 bg-indigo-400/10 p-5">
-            <p class="text-sm font-semibold text-indigo-300">
-              Phase 02 · Current
+          <article data-scroll-reveal="element" class="rounded-xl border border-indigo-400/40 bg-indigo-400/10 p-5">
+            <p data-scroll-reveal class="text-sm font-semibold text-indigo-300">
+              Phase 02
             </p>
 
-            <h3 class="mt-3 font-semibold">
+            <h3 data-scroll-reveal class="mt-3 font-semibold">
               Frontend Preview
             </h3>
 
-            <p class="mt-3 text-sm leading-6 text-slate-400">
+            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
               Build the first preview interface and validate the core
               layouts, item flows, and product experience.
             </p>
           </article>
 
-          <article class="rounded-xl border border-slate-800 bg-slate-950 p-5">
-            <p class="text-sm font-semibold text-slate-300">
-              Phase 03
+          <article data-scroll-reveal="element" class="rounded-xl border border-indigo-400/40 bg-indigo-400/10 p-5">
+            <p data-scroll-reveal class="text-sm font-semibold text-slate-300">
+              Phase 03 · Current
             </p>
 
-            <h3 class="mt-3 font-semibold">
+            <h3 data-scroll-reveal class="mt-3 font-semibold">
               Backend Foundation
             </h3>
 
-            <p class="mt-3 text-sm leading-6 text-slate-400">
+            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
               Start the Python and Django backend with models, database
               structure, authentication, and API endpoints.
             </p>
           </article>
 
-          <article class="rounded-xl border border-slate-800 bg-slate-950 p-5">
-            <p class="text-sm font-semibold text-slate-300">
+          <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-950 p-5">
+            <p data-scroll-reveal class="text-sm font-semibold text-slate-300">
               Phase 04
             </p>
 
-            <h3 class="mt-3 font-semibold">
+            <h3 data-scroll-reveal class="mt-3 font-semibold">
               Feature Expansion
             </h3>
 
-            <p class="mt-3 text-sm leading-6 text-slate-400">
+            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
               Add the main app features, connect frontend workflows, and
               finalize backend behavior.
             </p>
           </article>
 
-          <article class="rounded-xl border border-slate-800 bg-slate-950 p-5">
-            <p class="text-sm font-semibold text-slate-300">
+          <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-950 p-5">
+            <p data-scroll-reveal class="text-sm font-semibold text-slate-300">
               Phase 05
             </p>
 
-            <h3 class="mt-3 font-semibold">
+            <h3 data-scroll-reveal class="mt-3 font-semibold">
               Release
             </h3>
 
-            <p class="mt-3 text-sm leading-6 text-slate-400">
+            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
               Polish the product, test core paths, prepare deployment,
               and launch the first stable version.
             </p>
           </article>
 
-          <article class="rounded-xl border border-slate-800 bg-slate-950 p-5">
-            <p class="text-sm font-semibold text-slate-300">
+          <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-950 p-5">
+            <p data-scroll-reveal class="text-sm font-semibold text-slate-300">
               Phase 06
             </p>
 
-            <h3 class="mt-3 font-semibold">
+            <h3 data-scroll-reveal class="mt-3 font-semibold">
               Initial Mobile App
             </h3>
 
-            <p class="mt-3 text-sm leading-6 text-slate-400">
+            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
               Design and build the first mobile experience after the web
               app and backend are stable.
             </p>
@@ -409,6 +409,29 @@
       </div>
     </section>
   </main>
+
+  <footer class="landing-footer">
+    <div class="landing-footer-inner">
+      <a href="/" class="landing-brand landing-footer-brand" aria-label="TanaSpace home">
+        {% include 'includes/logo.html' %}
+        <span>TanaSpace</span>
+      </a>
+
+      <a href="https://github.com/keruji/TanaSpace"
+        class="landing-footer-github"
+        target="_blank" rel="noopener noreferrer"
+        aria-label="TanaSpace on GitHub (opens in a new tab)"
+        title="View TanaSpace on GitHub">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          aria-hidden="true" focusable="false">
+          <path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 19 4.77 5.07 5.07 0 0 0 18.91 1S17.73.65 15 2.48a13.38 13.38 0 0 0-7 0C5.27.65 4.09 1 4.09 1A5.07 5.07 0 0 0 4 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 8 18.13V22" />
+        </svg>
+      </a>
+    </div>
+
+    <p class="landing-footer-copyright">© {% now "Y" %} TanaSpace. All rights reserved.</p>
+  </footer>
 
   <script type="module" src="{% static 'app.js' %}"></script>
 </body>
