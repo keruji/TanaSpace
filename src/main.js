@@ -7,8 +7,8 @@ const siteHeader = document.querySelector("#site-header");
 initTheme();
 
 function updateStickyOffsets() {
-  const previewHeight = previewBar?.offsetHeight ?? 0;
-  const headerHeight = siteHeader?.offsetHeight ?? 0;
+  const previewHeight = previewBar?.getBoundingClientRect().height ?? 0;
+  const headerHeight = siteHeader?.getBoundingClientRect().height ?? 0;
   const stickyOffset = previewHeight + headerHeight;
 
   document.documentElement.style.setProperty(
@@ -19,6 +19,8 @@ function updateStickyOffsets() {
     "--sticky-offset",
     `${stickyOffset}px`,
   );
+  // Enable snapping after measuring the header, including fractional pixels.
+  document.documentElement.toggleAttribute("data-scroll-ready", Boolean(siteHeader));
 }
 
 updateStickyOffsets();

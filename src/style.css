@@ -72,8 +72,11 @@
 @media (min-width: 1024px) and (min-height: 760px) {
   html.landing-page {
     scroll-behavior: smooth;
-    scroll-snap-type: y mandatory;
     scroll-padding-top: var(--sticky-offset);
+  }
+
+  html.landing-page[data-scroll-ready] {
+    scroll-snap-type: y mandatory;
   }
 
   html.landing-page main > section {

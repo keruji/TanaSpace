@@ -11,6 +11,13 @@
 body {
   margin: 0;
 }
+
+body.workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
 @layer base {
   a {
     color: inherit;
@@ -104,6 +111,7 @@ button svg {
   gap: 24px;
   padding: 0 32px;
   min-height: 112px;
+  flex-shrink: 0;
 }
 .app-logo {
   display: inline-flex;
@@ -157,7 +165,16 @@ button svg {
   grid-template-columns: 224px minmax(0, 1fr);
   gap: 24px;
   padding: 0 32px 28px;
-  min-height: calc(100svh - 112px);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-layout > main {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
 }
 .sidebar {
   display: flex;
@@ -239,16 +256,11 @@ button svg {
   background: var(--canvas);
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr) auto;
 }
-.app-layout {
-  min-height: calc(100dvh - var(--app-header-height));
-}
 .sidebar {
-  position: sticky;
-  top: var(--app-header-height);
-  align-self: start;
-  height: calc(100dvh - var(--app-header-height) - 16px);
+  height: 100%;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
 }
 .nav-item:not(:disabled):hover {
   background: var(--surface);
@@ -335,7 +347,6 @@ button svg {
     grid-template-columns: 160px minmax(0, 1fr);
     padding: 0 24px 24px;
     gap: 18px;
-    min-height: calc(100svh - 96px);
   }
   .nav-item {
     padding: 14px 12px;
@@ -368,9 +379,6 @@ button svg {
     justify-content: space-between;
     gap: 10px;
   }
-  .app-layout {
-    min-height: 0;
-  }
   .brand {
     font-size: 22px;
   }
@@ -378,9 +386,9 @@ button svg {
     display: none;
   }
   .app-layout {
-    display: block;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
     padding: 0 14px 20px;
-    min-height: 0;
   }
   .sidebar {
     padding-bottom: 16px;
