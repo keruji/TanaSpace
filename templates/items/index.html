@@ -42,7 +42,7 @@
 </main>
 {% if modal_mode %}
 <div class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4 sm:p-8">
-  <section class="modal-card relative w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl sm:p-8" role="dialog" aria-modal="true" aria-labelledby="item-modal-title">
+  <section class="modal-card relative w-full max-w-xl rounded-2xl bg-surface p-6 shadow-2xl sm:p-8" role="dialog" aria-modal="true" aria-labelledby="item-modal-title">
     <a class="modal-close" href="{% url 'items:index' %}" aria-label="Close window">Close {% include 'includes/icon.html' with icon_name='x' only %}</a>
     {% if modal_mode == 'create' %}
       <span class="eyebrow">Your collection</span><h2 id="item-modal-title">Add an item</h2>

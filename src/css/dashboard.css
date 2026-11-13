@@ -7,7 +7,7 @@
 .welcome-panel {
   grid-area: 1/1;
   min-height: 270px;
-  background: #fff;
+  background: var(--surface);
   position: relative;
   overflow: hidden;
 }
@@ -23,7 +23,7 @@
   color: var(--accent);
 }
 .welcome-panel > p {
-  color: #8a8e82;
+  color: var(--muted);
   font-size: 12px;
   line-height: 1.8;
 }
@@ -32,7 +32,7 @@
   align-items: center;
   gap: 8px;
   font-size: 10px;
-  color: #858a7d;
+  color: var(--muted);
   margin-top: 25px;
 }
 .status-dot {
@@ -41,7 +41,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #8b9d72;
+  background: var(--accent);
   vertical-align: middle;
 }
 .activity-panel {
@@ -57,14 +57,14 @@
   align-items: center;
   gap: 12px;
   padding: 14px 0;
-  border-bottom: 1px solid #f1f2ed;
+  border-bottom: 1px solid var(--line);
 }
 .activity-list li:last-child {
   border-bottom: 0;
 }
 .activity-icon {
-  background: #f3f5ef;
-  color: #7e8c6b;
+  background: var(--soft);
+  color: var(--accent-text);
   border-radius: 9px;
   width: 32px;
   height: 32px;
@@ -82,13 +82,13 @@
 }
 .activity-list p {
   font-size: 10px;
-  color: #9ca18f;
+  color: var(--muted);
   margin-top: 5px;
 }
 .activity-list time {
   margin-left: auto;
   text-align: right;
-  color: #999d92;
+  color: var(--muted);
   font-size: 9px;
   line-height: 1.8;
 }
@@ -102,7 +102,7 @@
 }
 .up-next p {
   font-size: 10px;
-  color: #959b8b;
+  color: var(--muted);
   line-height: 1.8;
   margin-top: 6px;
 }
@@ -119,15 +119,15 @@
 }
 .account-panel > .panel-heading > span {
   font-size: 16px;
-  color: #999e91;
+  color: var(--muted);
 }
 .profile-avatar {
   display: block;
   width: 58px;
   height: 58px;
   border-radius: 17px;
-  background: #edf0e6;
-  color: #7e8c6b;
+  background: var(--accent-soft);
+  color: var(--accent-text);
   padding: 13px;
   margin: 0 auto 13px;
 }
@@ -152,11 +152,11 @@
   border-top: 1px solid var(--line);
 }
 .account-details dt {
-  color: #8e9385;
+  color: var(--muted);
 }
 .account-details dd {
   margin: 0;
-  color: #5c6452;
+  color: var(--text);
 }
 .account-details dd .status-dot {
   margin-right: 5px;
@@ -164,7 +164,7 @@
 .account-note {
   margin-top: 22px;
   padding: 20px 12px;
-  background: #f6f7f3;
+  background: var(--soft);
   border-radius: 12px;
   text-align: left;
   display: flex;
@@ -173,7 +173,7 @@
 }
 .account-note > span {
   font-size: 32px;
-  color: #8c9a79;
+  color: var(--accent-text);
 }
 .account-note .ui-icon {
   width: 26px;
@@ -182,13 +182,13 @@
 .account-note p {
   font-size: 11px;
   line-height: 1.7;
-  color: #8b937e;
+  color: var(--muted);
 }
 .dashboard-footer {
   grid-column: 1/-1;
   display: flex;
   justify-content: space-between;
-  color: #a6aa9d;
+  color: var(--muted);
   font-size: 9px;
   padding: 12px 3px;
 }

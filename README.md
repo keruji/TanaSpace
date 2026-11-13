@@ -1,3 +1,10 @@
+<p align="center">
+  <a href="https://tanaspace.dpdns.org">
+    <img src="static/images/logo.svg" alt="TanaSpace" width="120">
+  </a>
+</p>
+
+
 # TanaSpace
 
 **A place for the things you own and the plans you’re making.**
