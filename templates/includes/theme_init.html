@@ -1,0 +1,14 @@
+<script>
+  (() => {
+    let theme;
+    try {
+      theme = localStorage.getItem("tanaspace-theme")
+        || localStorage.getItem("tanaspace-landing-theme");
+    } catch (_) {
+      // Use the system theme when storage is unavailable.
+    }
+    document.documentElement.dataset.theme = theme === "light" || theme === "dark"
+      ? theme
+      : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  })();
+</script>

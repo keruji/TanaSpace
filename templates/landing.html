@@ -12,52 +12,41 @@
   <link rel="icon" type="image/svg+xml" href="{% static 'images/logo.svg' %}" />
 
   <title>TanaSpace</title>
-  <script>
-    try {
-      if (localStorage.getItem("tanaspace-landing-theme") === "dark") {
-        document.documentElement.dataset.theme = "dark";
-      }
-    } catch (_) {
-      // Keep the default theme when browser storage is unavailable.
-    }
-  </script>
+  {% include 'includes/theme_init.html' %}
   <link rel="stylesheet" href="{% static 'app.css' %}?v={{ app_css_version }}">
 </head>
 
-<body class="min-h-screen bg-slate-950 text-slate-100">
-  <div id="preview-bar" class="p-1 text-center text-sm uppercase tracking-wide text-white">
+<body class="min-h-screen bg-canvas text-foreground">
+  <div id="preview-bar" class="p-1 text-center text-sm uppercase tracking-wide text-on-action">
     Preview
   </div>
 
-  <header id="site-header" class="border-b border-slate-800">
+  <header id="site-header" class="border-b border-line">
     <nav class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-6">
       <a href="/" class="landing-brand text-xl font-bold tracking-tight">
         {% include 'includes/logo.html' %}
         <span>TanaSpace</span>
       </a>
 
-      <div class="flex items-center gap-3 text-sm text-slate-300 sm:gap-6">
-        <button id="theme-toggle" type="button" class="theme-toggle" aria-label="Dark mode" aria-pressed="false" title="Switch to dark mode">
-          <span class="theme-icon theme-icon-moon">{% include 'includes/icon.html' with icon_name='moon' only %}</span>
-          <span class="theme-icon theme-icon-sun">{% include 'includes/icon.html' with icon_name='sun' only %}</span>
-        </button>
+      <div class="flex items-center gap-3 text-sm text-muted sm:gap-6">
+        {% include 'includes/theme_toggle.html' %}
 
-        <a href="#features" class="hidden transition hover:text-white sm:inline">
+        <a href="#features" class="hidden transition hover:text-foreground sm:inline">
           Features
         </a>
 
-        <a href="#about" class="hidden transition hover:text-white sm:inline">
+        <a href="#about" class="hidden transition hover:text-foreground sm:inline">
           About
         </a>
 
-        <a href="#roadmap" class="hidden transition hover:text-white sm:inline">
+        <a href="#roadmap" class="hidden transition hover:text-foreground sm:inline">
           Roadmap
         </a>
 
         <form method="post" action="{% url 'accounts:demo' %}">
           {% csrf_token %}
           <button type="submit"
-            class="cursor-pointer rounded-lg bg-indigo-500 px-4 py-2 font-medium text-white transition hover:bg-indigo-400">
+            class="cursor-pointer rounded-lg bg-action px-4 py-2 font-medium text-on-action transition hover:bg-action-hover">
             Demo
           </button>
         </form>
@@ -69,8 +58,7 @@
     <section class="mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 lg:grid-cols-2">
       <div>
         <p data-scroll-reveal="element"
-          class="mb-4 inline-flex rounded-full border border-indigo-400/30
-            bg-indigo-400/10 px-3 py-1 text-sm text-indigo-300"
+          class="mb-4 inline-flex rounded-full border border-line bg-brand-soft px-3 py-1 text-sm text-brand-ink"
         >
           Inventory, reminders, and planning in one place
         </p>
@@ -79,7 +67,7 @@
           Keep track of what you own and what comes next.
         </h1>
 
-        <p data-scroll-reveal class="mt-6 max-w-xl text-lg leading-8 text-slate-400">
+        <p data-scroll-reveal class="mt-6 max-w-xl text-lg leading-8 text-muted">
           TanaSpace helps you record items, remember expirations and
           warranties, plan grocery runs, save recipes, and organize
           future builds without scattering details across notes and
@@ -90,36 +78,34 @@
           <form method="post" action="{% url 'accounts:demo' %}">
             {% csrf_token %}
             <button type="submit"
-              class="cursor-pointer rounded-xl bg-indigo-500 px-6 py-3 font-semibold text-white
-                transition hover:bg-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+              class="cursor-pointer rounded-xl bg-action px-6 py-3 font-semibold text-on-action transition hover:bg-action-hover focus:outline-none focus:ring-2 focus:ring-focus">
               Try the demo
             </button>
           </form>
 
           <a
             href="#features"
-            class="rounded-xl border border-slate-700 px-6 py-3 font-semibold text-slate-200
-              transition hover:border-slate-500 hover:bg-slate-900"
+            class="rounded-xl border border-line px-6 py-3 font-semibold text-foreground transition hover:border-action hover:bg-soft"
           >
             See what it tracks
           </a>
         </div>
       </div>
 
-      <div data-scroll-reveal="element" class="rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-2xl shadow-indigo-950/40">
+      <div data-scroll-reveal="element" class="rounded-3xl border border-line bg-surface p-6 shadow-2xl shadow-prussian-blue-950/10">
         <div class="mb-6 flex items-center justify-between">
           <div>
             <p data-scroll-reveal class="font-semibold">
               Today in TanaSpace
             </p>
 
-            <p data-scroll-reveal class="text-sm text-slate-400">
+            <p data-scroll-reveal class="text-sm text-muted">
               4 active lists and reminders
             </p>
           </div>
 
           <button type="button"
-            class="rounded-lg border border-slate-700 px-3 py-2 text-sm transition hover:bg-slate-800">
+            class="rounded-lg border border-line px-3 py-2 text-sm transition hover:bg-soft">
             Add item
           </button>
         </div>
@@ -178,8 +164,7 @@
           <button
             type="button"
             aria-label="Add a new record"
-            class="flex aspect-[3/4] items-center justify-center rounded-xl border border-dashed
-              border-slate-600 text-3xl text-slate-500 transition hover:border-slate-400 hover:text-slate-300"
+            class="flex aspect-[3/4] items-center justify-center rounded-xl border border-dashed border-line text-3xl text-muted transition hover:border-action hover:text-brand-ink"
           >
             {% include 'includes/icon.html' with icon_name='plus' only %}
           </button>
@@ -189,7 +174,7 @@
 
     <section id="features" class="mx-auto max-w-6xl px-6 py-20">
       <div class="max-w-3xl">
-        <p data-scroll-reveal class="text-sm font-semibold uppercase text-indigo-300">
+        <p data-scroll-reveal class="text-sm font-semibold uppercase text-brand-ink">
           Features
         </p>
 
@@ -197,7 +182,7 @@
           A practical space for the things you own, use, and plan.
         </h2>
 
-        <p data-scroll-reveal class="mt-4 leading-7 text-slate-400">
+        <p data-scroll-reveal class="mt-4 leading-7 text-muted">
           TanaSpace is designed around everyday records: items,
           reminders, groceries, recipes, computer builds, and other
           personal systems that are easier to manage when they live in
@@ -206,72 +191,72 @@
       </div>
 
       <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-900 p-6">
+        <article data-scroll-reveal="element" class="rounded-xl border border-line bg-surface p-6">
           <h3 data-scroll-reveal class="font-semibold">
             Item Records
           </h3>
 
-          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
+          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
             Record devices, consumables, tools, supplies, or almost
             anything with details like item type, variant, size, weight,
             brand, notes, and photos later.
           </p>
         </article>
 
-        <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-900 p-6">
+        <article data-scroll-reveal="element" class="rounded-xl border border-line bg-surface p-6">
           <h3 data-scroll-reveal class="font-semibold">
             Expiration and Warranty Reminders
           </h3>
 
-          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
+          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
             Add expiration dates, warranty periods, renewal dates, or
             service schedules so TanaSpace can remind you before
             something is wasted, forgotten, or out of coverage.
           </p>
         </article>
 
-        <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-900 p-6">
+        <article data-scroll-reveal="element" class="rounded-xl border border-line bg-surface p-6">
           <h3 data-scroll-reveal class="font-semibold">
             Grocery Checklists
           </h3>
 
-          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
+          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
             Start from reusable grocery templates, then remove or add
             items for a specific scheduled grocery run without changing
             the original template.
           </p>
         </article>
 
-        <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-900 p-6">
+        <article data-scroll-reveal="element" class="rounded-xl border border-line bg-surface p-6">
           <h3 data-scroll-reveal class="font-semibold">
             Recipe Collections
           </h3>
 
-          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
+          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
             Save recipes with ingredients, step-by-step instructions,
             estimated time, preparation notes, and the actions needed at
             each stage.
           </p>
         </article>
 
-        <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-900 p-6">
+        <article data-scroll-reveal="element" class="rounded-xl border border-line bg-surface p-6">
           <h3 data-scroll-reveal class="font-semibold">
             PC Build Planner
           </h3>
 
-          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
+          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
             Record a current computer build, track components, and plan
             future builds with parts lists, upgrade ideas, and checklist
             progress.
           </p>
         </article>
 
-        <article data-scroll-reveal="element" class="rounded-xl border border-dashed border-slate-700 bg-slate-950 p-6">
+        <article data-scroll-reveal="element" class="rounded-xl border border-dashed border-line bg-quiet p-6">
           <h3 data-scroll-reveal class="font-semibold">
             More Tools Later
           </h3>
 
-          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
+          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
             The feature set can keep growing as the product becomes
             clearer, with new spaces for other routines, collections,
             and planning workflows.
@@ -280,9 +265,9 @@
       </div>
     </section>
 
-    <section id="about" class="border-t border-slate-800 bg-slate-900/50">
+    <section id="about" class="border-t border-line bg-soft">
       <div class="mx-auto max-w-6xl px-6 py-20">
-        <p data-scroll-reveal class="text-sm font-semibold uppercase text-indigo-300">
+        <p data-scroll-reveal class="text-sm font-semibold uppercase text-brand-ink">
           About
         </p>
 
@@ -290,7 +275,7 @@
           A personal space, built one step at a time.
         </h2>
 
-        <p data-scroll-reveal class="mt-4 max-w-3xl leading-7 text-slate-400">
+        <p data-scroll-reveal class="mt-4 max-w-3xl leading-7 text-muted">
           TanaSpace now has a Django foundation with personal accounts and
           a dashboard. Inventory, reminders, and planning tools are next
           as your space grows.
@@ -298,9 +283,9 @@
       </div>
     </section>
 
-    <section id="roadmap" class="border-t border-slate-800 bg-slate-900/50">
+    <section id="roadmap" class="border-t border-line bg-soft">
       <div class="mx-auto max-w-6xl px-6 py-20">
-        <p data-scroll-reveal class="text-sm font-semibold uppercase text-indigo-300">
+        <p data-scroll-reveal class="text-sm font-semibold uppercase text-brand-ink">
           Roadmap
         </p>
 
@@ -308,7 +293,7 @@
           From preview to a complete personal space platform.
         </h2>
 
-        <p data-scroll-reveal class="mt-4 max-w-3xl leading-7 text-slate-400">
+        <p data-scroll-reveal class="mt-4 max-w-3xl leading-7 text-muted">
           The roadmap is organized around major product milestones:
           first shaping the landing page, then proving the frontend
           experience, adding the Django backend, preparing the release,
@@ -316,8 +301,8 @@
         </p>
 
         <div class="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <article data-scroll-reveal="element" class="rounded-xl border border-indigo-400/40 bg-indigo-400/10 p-5">
-            <p data-scroll-reveal class="text-sm font-semibold uppercase text-indigo-300">
+          <article data-scroll-reveal="element" class="rounded-xl border border-line bg-brand-soft p-5">
+            <p data-scroll-reveal class="text-sm font-semibold uppercase text-brand-ink">
               Phase 01
             </p>
 
@@ -325,14 +310,14 @@
               Landing Page
             </h3>
 
-            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
+            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
               Define the product message, feature direction, roadmap,
               and first public-facing page for TanaSpace.
             </p>
           </article>
 
-          <article data-scroll-reveal="element" class="rounded-xl border border-indigo-400/40 bg-indigo-400/10 p-5">
-            <p data-scroll-reveal class="text-sm font-semibold text-indigo-300">
+          <article data-scroll-reveal="element" class="rounded-xl border border-line bg-brand-soft p-5">
+            <p data-scroll-reveal class="text-sm font-semibold text-brand-ink">
               Phase 02
             </p>
 
@@ -340,14 +325,14 @@
               Frontend Preview
             </h3>
 
-            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
+            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
               Build the first preview interface and validate the core
               layouts, item flows, and product experience.
             </p>
           </article>
 
-          <article data-scroll-reveal="element" class="rounded-xl border border-indigo-400/40 bg-indigo-400/10 p-5">
-            <p data-scroll-reveal class="text-sm font-semibold text-slate-300">
+          <article data-scroll-reveal="element" class="rounded-xl border border-line bg-brand-soft p-5">
+            <p data-scroll-reveal class="text-sm font-semibold text-muted">
               Phase 03 · Current
             </p>
 
@@ -355,14 +340,14 @@
               Backend Foundation
             </h3>
 
-            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
+            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
               Start the Python and Django backend with models, database
               structure, authentication, and API endpoints.
             </p>
           </article>
 
-          <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-950 p-5">
-            <p data-scroll-reveal class="text-sm font-semibold text-slate-300">
+          <article data-scroll-reveal="element" class="rounded-xl border border-line bg-quiet p-5">
+            <p data-scroll-reveal class="text-sm font-semibold text-muted">
               Phase 04
             </p>
 
@@ -370,14 +355,14 @@
               Feature Expansion
             </h3>
 
-            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
+            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
               Add the main app features, connect frontend workflows, and
               finalize backend behavior.
             </p>
           </article>
 
-          <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-950 p-5">
-            <p data-scroll-reveal class="text-sm font-semibold text-slate-300">
+          <article data-scroll-reveal="element" class="rounded-xl border border-line bg-quiet p-5">
+            <p data-scroll-reveal class="text-sm font-semibold text-muted">
               Phase 05
             </p>
 
@@ -385,14 +370,14 @@
               Release
             </h3>
 
-            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
+            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
               Polish the product, test core paths, prepare deployment,
               and launch the first stable version.
             </p>
           </article>
 
-          <article data-scroll-reveal="element" class="rounded-xl border border-slate-800 bg-slate-950 p-5">
-            <p data-scroll-reveal class="text-sm font-semibold text-slate-300">
+          <article data-scroll-reveal="element" class="rounded-xl border border-line bg-quiet p-5">
+            <p data-scroll-reveal class="text-sm font-semibold text-muted">
               Phase 06
             </p>
 
@@ -400,7 +385,7 @@
               Initial Mobile App
             </h3>
 
-            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-slate-400">
+            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
               Design and build the first mobile experience after the web
               app and backend are stable.
             </p>

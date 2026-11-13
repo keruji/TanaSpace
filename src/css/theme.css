@@ -1,0 +1,75 @@
+@theme static {
+  --color-prussian-blue-50: #ebeefa;
+  --color-prussian-blue-100: #d6def5;
+  --color-prussian-blue-200: #aebdea;
+  --color-prussian-blue-300: #859ce0;
+  --color-prussian-blue-400: #5d7bd5;
+  --color-prussian-blue-500: #345acb;
+  --color-prussian-blue-600: #2a48a2;
+  --color-prussian-blue-700: #1f367a;
+  --color-prussian-blue-800: #152451;
+  --color-prussian-blue-900: #0a1229;
+  --color-prussian-blue-950: #070d1c;
+}
+
+/* Semantic utilities change with the selected theme; palette utilities stay fixed. */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-soft: var(--soft);
+  --color-quiet: var(--quiet);
+  --color-foreground: var(--text);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-action: var(--accent);
+  --color-action-hover: var(--accent-hover);
+  --color-on-action: var(--on-accent);
+  --color-brand-soft: var(--accent-soft);
+  --color-brand-ink: var(--accent-text);
+  --color-focus: var(--focus);
+}
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  color-scheme: light;
+  --canvas: var(--color-prussian-blue-50);
+  --surface: #fff;
+  --soft: var(--color-prussian-blue-50);
+  --quiet: color-mix(in srgb, var(--surface) 60%, var(--soft));
+  --text: var(--color-prussian-blue-950);
+  --muted: var(--color-prussian-blue-700);
+  --line: var(--color-prussian-blue-100);
+  --accent: var(--color-prussian-blue-600);
+  --accent-hover: var(--color-prussian-blue-700);
+  --on-accent: #fff;
+  --accent-soft: var(--color-prussian-blue-100);
+  --accent-text: var(--color-prussian-blue-700);
+  --focus: var(--color-prussian-blue-500);
+  --danger: #a83c35;
+  --danger-hover: #8f302b;
+  --danger-text: #9d3e35;
+  --danger-soft: #fff3f0;
+  --shadow: color-mix(in srgb, var(--color-prussian-blue-950) 8%, transparent);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: var(--color-prussian-blue-950);
+  --surface: var(--color-prussian-blue-900);
+  --soft: var(--color-prussian-blue-800);
+  --quiet: color-mix(in srgb, var(--surface) 60%, var(--canvas));
+  --text: var(--color-prussian-blue-50);
+  --muted: var(--color-prussian-blue-200);
+  --line: var(--color-prussian-blue-800);
+  --accent: var(--color-prussian-blue-500);
+  --accent-hover: var(--color-prussian-blue-600);
+  --accent-soft: var(--color-prussian-blue-800);
+  --accent-text: var(--color-prussian-blue-200);
+  --focus: var(--color-prussian-blue-300);
+  --danger: #a83c35;
+  --danger-hover: #8f302b;
+  --danger-text: #ffb4ab;
+  --danger-soft: #391e22;
+  --shadow: color-mix(in srgb, var(--color-prussian-blue-950) 40%, transparent);
+}
