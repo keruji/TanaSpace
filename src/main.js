@@ -1,10 +1,12 @@
 import "./style.css";
 import { initScrollReveal } from "./scroll-reveal.js";
 import { initTheme } from "./theme.js";
+import { initWorkspace } from "./workspace.js";
 
 const previewBar = document.querySelector("#preview-bar");
 const siteHeader = document.querySelector("#site-header");
 initTheme();
+initWorkspace();
 
 function updateStickyOffsets() {
   const previewHeight = previewBar?.getBoundingClientRect().height ?? 0;

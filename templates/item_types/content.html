@@ -1,0 +1,22 @@
+<main data-page-title="Tana Types · TanaSpace" id="main" tabindex="-1" data-active-nav="{{ active_nav }}" data-page-url="{{ page_url }}" class="items-page item-types-page">
+  <nav class="settings-breadcrumb" aria-label="Breadcrumb"><a href="{% url 'accounts:settings' %}">Settings</a> / <span>Tana Types</span></nav>
+  <div class="items-page-heading">
+    <div><span class="eyebrow">Your collection</span><h1>Tana Types</h1><p>Organize your items by type.</p></div>
+    <div class="flex items-center gap-3"><span class="items-count">{{ type_count }} type{{ type_count|pluralize }}</span><a class="primary-button action-with-icon" href="{% url 'item_types:create' %}?return_to={{ page_url|urlencode }}" data-window>{% include 'includes/icon.html' with icon_name='plus' only %} <span>Add type</span></a></div>
+  </div>
+  {% if messages %}{% for message in messages %}<p class="form-errors" role="alert">{{ message }}</p>{% endfor %}{% endif %}
+  {% if type_count > 40 %}<p class="section-caption">Showing 40 types per page, in sequence order.</p>{% endif %}
+  <section class="panel item-list-panel" aria-labelledby="saved-types-title">
+    <div class="panel-heading"><h2 id="saved-types-title">Saved types</h2><span class="tag">Your space</span></div>
+    {% if item_types %}<ul class="item-list">
+      {% for item_type in item_types %}<li class="clickable-item"><a class="item-row" href="{% url 'item_types:detail' item_type.pk %}?return_to={{ page_url|urlencode }}" data-window aria-label="View {{ item_type.name }}"><span class="item-symbol">{% include 'includes/icon.html' with icon_name='notebook-tabs' only %}</span><div class="item-details"><h3>{{ item_type.name }}</h3><p>{{ item_type.item_count }} item{{ item_type.item_count|pluralize }}</p>{% if item_type.description %}<p>{{ item_type.description|truncatechars:100 }}</p>{% endif %}</div></a></li>{% endfor %}
+    </ul>{% else %}<div class="empty-items"><h3>No types yet.</h3><p>Create your first type to organize items.</p></div>{% endif %}
+  </section>
+  {% if page_obj.has_other_pages %}
+    <nav class="list-pagination" aria-label="Type pages">
+      {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+      <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+    </nav>
+  {% endif %}
+</main>

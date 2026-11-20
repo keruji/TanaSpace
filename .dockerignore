@@ -13,3 +13,6 @@ __pycache__
 *.sqlite3
 .local-backups/
 staticfiles
+# Local browser traces and reports must not enter application images.
+playwright-report
+test-results

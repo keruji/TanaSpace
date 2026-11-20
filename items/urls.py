@@ -4,6 +4,7 @@ from . import views
 
 app_name = "items"
 urlpatterns = [
+    path("<int:pk>/favorite/", views.favorite, name="favorite"),
     path("", views.index, name="index"),
     path("new/", views.create, name="create"),
     path("<int:pk>/", views.detail, name="detail"),

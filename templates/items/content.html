@@ -1,0 +1,44 @@
+<main data-page-title="{{ list_title }} · TanaSpace" id="main" tabindex="-1" data-active-nav="{{ active_nav }}" data-page-url="{{ page_url }}" class="items-page">
+  <div class="items-page-heading">
+    <div>
+      <span class="eyebrow">Your collection</span>
+      <h1>{{ list_title }}</h1>
+      <p>Keep a simple record of the things you want to remember.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="items-count">{% if favorites_only %}{{ result_count }} favorite{{ result_count|pluralize }}{% else %}{{ item_count }} item{{ item_count|pluralize }}{% endif %}</span>
+      <a class="primary-button action-with-icon" href="{% url 'items:create' %}?return_to={{ page_url|urlencode }}" data-window>{% include 'includes/icon.html' with icon_name='plus' only %} <span>Add item</span></a>
+    </div>
+  </div>
+  {% if item_count > 40 %}<p class="section-caption">Showing 40 items per page, newest first.</p>{% endif %}
+  <form class="item-search" method="get" action="{% if favorites_only %}{% url 'items:favorites' %}{% else %}{% url 'items:index' %}{% endif %}" data-workspace-search>
+    <div><label for="id_q">Search items</label>{{ search_form.q }}{{ search_form.q.errors }}</div>
+    <div><label for="id_type">Tana Type</label>{{ search_form.type }}{{ search_form.type.errors }}</div>
+    <button class="primary-button" type="submit">Search</button>
+  </form>
+  <section class="panel item-list-panel" aria-labelledby="saved-items-title">
+    <div class="panel-heading"><h2 id="saved-items-title">{% if favorites_only %}Favorite items{% else %}Saved items{% endif %}</h2><span class="tag">{{ result_count }} result{{ result_count|pluralize }}</span></div>
+    {% if items %}
+      <ul class="item-list">
+        {% for item in items %}
+          <li class="clickable-item">
+            <a class="item-row" href="{% url 'items:detail' item.pk %}?return_to={{ page_url|urlencode }}" data-window aria-label="View {{ item.name }}">
+              <span class="item-symbol">{% include 'includes/icon.html' with icon_name='package' only %}</span>
+              <div class="item-details"><h3>{{ item.name }}</h3><p>{{ item.item_type.name }}</p>{% if item.description %}<p>{{ item.description|truncatechars:100 }}</p>{% endif %}</div>
+              <div class="item-actions"><time datetime="{{ item.created_at|date:'c' }}">{{ item.created_at|date:'M j, Y' }}</time></div>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty-items"><span>{% include 'includes/icon.html' with icon_name='package' only %}</span><h3>{% if search_form.q.value or search_form.type.value %}No matching items.{% elif favorites_only %}No favorites yet.{% else %}Nothing on your shelf yet.{% endif %}</h3><p>{% if favorites_only %}Open an item and choose Add to favorites.{% else %}Add an item, or try a different search.{% endif %}</p><a class="text-action" href="{% url 'item_types:index' %}">Manage types</a></div>
+    {% endif %}
+  </section>
+  {% if page_obj.has_other_pages %}
+    <nav class="list-pagination" aria-label="Item pages">
+      {% if page_obj.has_previous %}<a href="?{{ pagination_query }}&amp;page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+      <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}<a href="?{{ pagination_query }}&amp;page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+    </nav>
+  {% endif %}
+</main>

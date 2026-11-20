@@ -1,81 +1,58 @@
 {% extends 'base.html' %}
-{% load static %}
 {% block body_class %}workspace{% endblock %}
 {% block content %}
 <header class="app-header">
-  <a
-    class="app-logo"
-    href="{% url 'dashboard:index' %}"
-    aria-label="TanaSpace dashboard"
-  >
-    {% include 'includes/logo.html' %}
-  </a>
-  <a class="brand" href="{% url 'dashboard:index' %}">TanaSpace</a>
+  <div class="sidebar-heading">
+    <button class="icon-button sidebar-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="true" aria-label="Collapse navigation" hidden>
+      <span class="sidebar-icon-collapse">{% include 'includes/icon.html' with icon_name='panel-left-close' only %}</span>
+      <span class="sidebar-icon-expand">{% include 'includes/icon.html' with icon_name='panel-left-open' only %}</span>
+    </button>
+    <a class="sidebar-logo" href="{% url 'dashboard:index' %}" aria-label="TanaSpace dashboard">{% include 'includes/logo.html' %}</a>
+  </div>
+  <div class="workspace-brand">
+    <a class="compact-logo" href="{% url 'dashboard:index' %}" aria-label="TanaSpace dashboard">{% include 'includes/logo.html' %}</a>
+    <a class="brand workspace-name" href="{% url 'dashboard:index' %}">TanaSpace</a>
+  </div>
   <div class="header-actions">
     {% include 'includes/theme_toggle.html' %}
-    <div class="search-placeholder">
-      <input
-        type="search"
-        placeholder="Search"
-        aria-label="Search (coming soon)"
-        disabled
-      >
-      <span>{% include 'includes/icon.html' with icon_name='search' only %}</span>
+    <form class="header-search" method="get" action="{% url 'items:index' %}" role="search" data-workspace-search>
+      <input name="q" type="search" maxlength="160" placeholder="Search items" aria-label="Search items">
+      <button type="submit" class="icon-button" aria-label="Search">{% include 'includes/icon.html' with icon_name='search' only %}</button>
+    </form>
+    <div class="account-control">
+      <button class="icon-button" type="button" id="account-toggle" aria-controls="account-menu" aria-expanded="false" aria-haspopup="menu" aria-label="Account menu" hidden>
+        {% include 'includes/icon.html' with icon_name='user-round' icon_class='avatar' only %}
+      </button>
+      <div id="account-menu" class="account-menu" aria-label="Account" data-account-panel>
+        <p id="account-display-name">{{ user.display_name }}</p>
+        <div role="menu" aria-labelledby="account-toggle">
+          <a role="menuitem" href="{% url 'accounts:profile' %}">Profile</a>
+          <a role="menuitem" href="{% url 'accounts:settings' %}">Settings</a>
+          <hr>
+          <form method="post" action="{% url 'accounts:logout' %}" data-logout>{% csrf_token %}<button role="menuitem" type="submit">Log out</button></form>
+        </div>
+      </div>
     </div>
-    <button
-      class="icon-button"
-      type="button"
-      disabled
-      aria-label="Notifications (coming soon)"
-      title="Notifications coming soon"
-    >
-      {% include 'includes/icon.html' with icon_name='bell' only %}
-    </button>
-    {% include 'includes/icon.html' with icon_name='user-round' icon_class='avatar' only %}
   </div>
 </header>
 <div class="app-layout">
-  <aside class="sidebar">
+  <aside class="sidebar" id="workspace-sidebar" aria-label="Workspace navigation">
+    <button class="icon-button drawer-close" type="button" data-sidebar-close hidden aria-label="Close navigation">{% include 'includes/icon.html' with icon_name='x' only %}</button>
     <nav aria-label="Main navigation">
-      <a
-        aria-label="Dashboard"
-        class="nav-item{% if active_nav == 'dashboard' %} active{% endif %}"
-        href="{% url 'dashboard:index' %}"
-        {% if active_nav == 'dashboard' %}aria-current="page"{% endif %}
-      >
-        <span>{% include 'includes/icon.html' with icon_name='layout-dashboard' only %}</span>
-        <span class="nav-label">Dashboard</span>
+      <a data-nav="dashboard" class="nav-item{% if active_nav == 'dashboard' %} active{% endif %}" href="{% url 'dashboard:index' %}" aria-label="Dashboard" {% if active_nav == 'dashboard' %}aria-current="page"{% endif %}>
+        <span>{% include 'includes/icon.html' with icon_name='layout-dashboard' only %}</span><span class="nav-label">Dashboard</span><span class="nav-tooltip" aria-hidden="true">Dashboard</span>
       </a>
-      <a
-        class="nav-item{% if active_nav == 'items' %} active{% endif %}"
-        href="{% url 'items:index' %}"
-        {% if active_nav == 'items' %}aria-current="page"{% endif %}
-      >
-        <span>{% include 'includes/icon.html' with icon_name='notebook-tabs' only %}</span>
-        <span class="nav-label">My Tana</span>
+      <a data-nav="items" class="nav-item{% if active_nav == 'items' %} active{% endif %}" href="{% url 'items:index' %}" aria-label="My Tana" {% if active_nav == 'items' %}aria-current="page"{% endif %}>
+        <span>{% include 'includes/icon.html' with icon_name='notebook-tabs' only %}</span><span class="nav-label">My Tana</span><span class="nav-tooltip" aria-hidden="true">My Tana</span>
       </a>
-      <a class="nav-item{% if active_nav == 'item_types' %} active{% endif %}"
-         href="{% url 'item_types:index' %}"
-         {% if active_nav == 'item_types' %}aria-current="page"{% endif %}>
-        <span>{% include 'includes/icon.html' with icon_name='notebook-tabs' only %}</span>
-        <span class="nav-label">Tana Types</span>
+      <a data-nav="favorites" class="nav-item{% if active_nav == 'favorites' %} active{% endif %}" href="{% url 'items:favorites' %}" aria-label="Favorites" {% if active_nav == 'favorites' %}aria-current="page"{% endif %}>
+        <span>{% include 'includes/icon.html' with icon_name='star' only %}</span><span class="nav-label">Favorites</span><span class="nav-tooltip" aria-hidden="true">Favorites</span>
       </a>
-      <button class="nav-item" type="button" disabled title="Coming soon">
-        <span>{% include 'includes/icon.html' with icon_name='star' only %}</span>
-        <span class="nav-label">Favorites</span>
-        <small>Soon</small>
-      </button>
     </nav>
-    <div class="sidebar-footer">
-      <span class="eyebrow">A place for everything.</span>
-      <form method="post" action="{% url 'accounts:logout' %}">
-        {% csrf_token %}
-        <button class="logout-button" type="submit">
-          Log out {% include 'includes/icon.html' with icon_name='arrow-up-right' only %}
-        </button>
-      </form>
-    </div>
+    <div class="sidebar-footer"><span class="eyebrow">A place for everything.</span></div>
   </aside>
-  {% block app_main %}{% endblock %}
+  <div class="drawer-scrim" data-sidebar-close hidden></div>
+  <div id="workspace-view" hx-history-elt hx-history="false">{% block app_main %}{% endblock %}</div>
 </div>
+<div class="workspace-status" role="status" aria-live="polite" id="workspace-status" hidden></div>
 {% endblock %}
