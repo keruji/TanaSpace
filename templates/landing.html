@@ -9,7 +9,7 @@
 
   <meta name="description" content="TanaSpace frontend preview" />
 
-  <link rel="icon" type="image/svg+xml" href="{% static 'images/logo.svg' %}" />
+  <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}" />
 
   <title>TanaSpace</title>
   {% include 'includes/theme_init.html' %}
@@ -398,7 +398,7 @@
   <footer class="landing-footer">
     <div class="landing-footer-inner">
       <a href="/" class="landing-brand landing-footer-brand" aria-label="TanaSpace home">
-        {% include 'includes/logo.html' %}
+        {% include 'includes/logo.html' with logo_src='images/logo-24.svg' logo_size=24 %}
         <span>TanaSpace</span>
       </a>
 

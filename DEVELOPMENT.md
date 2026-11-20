@@ -66,7 +66,14 @@ these files run through Vite, so they can use Tailwind directives such as
 `@apply`. The browser receives one compiled `dist/app.css` file.
 UI icons use `templates/includes/icon.html` and `static/images/lucide.svg`;
 `src/css/icons.css` sets their shared size and stroke style. The TanaSpace
-logo remains its own asset.
+logo remains its own asset. The refined Soft Shelf SVGs live in
+`static/images/logo-{24,32,48,64,128}.svg`; `static/images/logo.svg` is the
+256 px master. The shared logo include uses the 32 px drawing by default;
+the landing footer uses 24 px and the README uses 128 px.
+`public/favicon.svg` uses the 24 px drawing. These transparent SVGs adapt to
+light and dark color schemes, including the app's selected theme through
+the root `color-scheme` setting. The 24 and 32 px drawings have geometry
+adjusted for those sizes; larger drawings use the refined master.
 Django serves the pages; Vite **builds Tailwind assets** for every page. Edit
 source files, not generated `dist/` files. Item and type lists show 40 records per page. An item needs a type; no fallback type is created.
 
