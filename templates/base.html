@@ -20,7 +20,6 @@
 <body class="{% block body_class %}{% endblock %}">
   <a class="skip-link" href="#main">Skip to content</a>
   {% block content %}{% endblock %}
-  <script defer src="{% static 'js/modal.js' %}"></script>
-  <script type="module" src="{% static 'app.js' %}"></script>
+  <script type="module" src="{% static 'app.js' %}?v={{ app_js_version }}"></script>
 </body>
 </html>

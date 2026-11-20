@@ -1,0 +1,14 @@
+<main data-page-title="Profile · TanaSpace" id="main" tabindex="-1" class="items-page" data-active-nav="profile" data-page-url="{{ page_url }}">
+  <div class="items-page-heading"><div><span class="eyebrow">Your account</span><h1>Profile</h1><p>Choose how your name appears in your space.</p></div></div>
+  <section class="panel profile-panel">
+    <h2>Personal information</h2>
+    <p class="section-caption">Username: <strong>{{ user.username }}</strong></p>
+    {% if saved %}<p class="success-message" role="status">Your profile has been saved.</p>{% endif %}
+    {% for message in messages %}<p class="success-message" role="status">{{ message }}</p>{% endfor %}
+    <form class="item-form" method="post" action="{% url 'accounts:profile' %}" data-async-form data-dirty-check>
+      {% csrf_token %}{% include 'includes/form.html' %}
+      <button class="primary-button action-with-icon" type="submit">{% include 'includes/icon.html' with icon_name='save' only %} <span>Save profile</span></button>
+    </form>
+    <span hidden data-display-name>{{ user.display_name }}</span>
+  </section>
+</main>

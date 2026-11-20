@@ -55,6 +55,10 @@ input:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 4px;
 }
+body :is(input:not([type="checkbox"], [type="radio"], [type="button"], [type="submit"], [type="reset"], [type="range"], [type="color"], [type="file"]), textarea):focus-visible {
+  outline: none;
+  border-color: var(--focus);
+}
 h1,
 h2,
 h3,

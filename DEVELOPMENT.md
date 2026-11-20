@@ -40,13 +40,13 @@ queries to the signed-in user; creating a model does not add those rules.
 | --- | --- |
 | `config/settings.py` | Installed apps, database, authentication, templates, static files, and environment settings. |
 | `config/urls.py` | Top-level routes: `/`, `/accounts/`, `/tana`, `/tana/items/`, `/tana/item_types/`, and `/admin/`. |
-| `accounts/` | Custom `User` model, session-scoped demo entry and logout, temporarily disabled public login/signup routes, admin registration, tests. |
+| `accounts/` | Custom `User`, Profile editing, Settings overview, demo entry/logout, and unchanged disabled public login/signup routes. |
 | `common/models.py` | Abstract `OwnershipModel` with shared name, owner, creation time, and edit history fields for future user-owned models. |
-| `dashboard/` | The `/tana` page. Its view fetches the signed-in user's three latest items. |
-| `items/` | Required type relation, item forms, list, floating create/view/edit/delete pages, routes, admin, migrations, and tests. |
+| `dashboard/` | The `/tana` page. Its view fetches the signed-in user's three latest items and owner-scoped totals. |
+| `items/` | Owner-scoped items, search/type filters, Favorites, HTML window fragments, quota enforcement, and tests. |
 | `item_types/` | Type model, form, ordered list, floating create/view/edit/delete pages, routes, migrations, and tests. |
 | `templates/base.html` | Shared HTML shell for app and account pages. |
-| `templates/app/base.html` | App header, sidebar, logout form, and `app_main` block. |
+| `templates/app/base.html` | Persistent header, collapsible sidebar, account menu with POST logout, and workspace content mount. |
 | `templates/dashboard/`, `templates/items/`, `templates/registration/` | Page HTML. |
 | `templates/includes/` | Reused logo and form-field markup. |
 | `templates/landing.html` | Public landing page at `/`. |
@@ -219,3 +219,98 @@ configured for all templates in `src/style.css`. The shared
 For a first independent exercise, add one optional field to `Item` using the
 steps above. It will take you through the database, form, server view,
 template, CSS, and test without introducing another app.
+
+
+## Dynamic workspace
+
+The header and sidebar remain mounted during authenticated navigation. HTMX
+2.0.11 is pinned in npm and bundled locally by Vite; no CDN or separate API is
+needed. `common/workspace.py` renders the same Django context as a full document,
+a workspace fragment, main-content-only fragment, or window fragment depending
+on `HX-Request` and `HX-Target`. Authentication and ownership checks run for every
+request. History-restore requests without `HX-Request` receive a full document.
+
+- `src/workspace.js` owns HTMX requests, URL history, titles, independent content
+  scroll restoration, dirty-form confirmation, asynchronous forms, and windows.
+- `src/workspace-shell.js` owns the persistent sidebar, mobile drawer, and account
+  menu. Desktop navigation preference is stored under `tanaspace-sidebar`;
+  mobile drawer state is temporary. Theme storage remains independent.
+- `templates/app/workspace_page.html` wraps the shared content templates for
+  direct visits. `content.html` and `window.html` in each record app contain the
+  reusable HTML. Normal links and CSRF-protected POST forms remain usable when
+  JavaScript is disabled.
+- The history controller stores only URLs, entry indexes, and scroll positions
+  in browser history. It uses the History API around HTMX so dirty forms can
+  reject Back/Forward before replacement; it does not cache private page HTML
+  in browser storage. Window Close returns to the previous in-app window or page. Successful
+  deletion returns directly to the originating collection so it cannot reopen
+  a deleted record. Direct window visits close through a safe collection URL.
+- Mutation responses return `X-Workspace-Changed`, optionally
+  `X-Workspace-URL` or `X-Workspace-Close`. These tell the controller to update
+  the detail URL, refresh the underlying region, or close a deleted record.
+  Validation returns the bound form with HTTP 200 and no mutation header.
+- Return URLs are allowlisted to non-modal workspace routes. Failure responses
+  never replace a form with a server error document. Writes are not retried
+  automatically; if a connection fails, check records before submitting again.
+
+Profile lives at `/tana/profile/`, Settings at `/tana/settings/`, and Favorites at
+`/tana/favorites/`. Tana Types keeps every existing `/tana/item_types/` URL but is
+accessed from Settings. Profile edits nickname and existing first/last name
+fields; username is read-only. Display names prefer nickname, then available
+name components, then username.
+
+Search uses `q`, `type`, and `page` query parameters on My Tana and Favorites.
+Results are owner-scoped, paginated at 40, and keep their filters when a window
+closes. Item and type limits remain 100 and 20. Favorites use an explicit-state
+POST rather than a blind toggle and do not change content edit metadata.
+
+The nickname and favorite fields have additive migrations with database defaults
+for previous-release insert compatibility. Local development runs migrations
+through its normal startup script. Production needs the separate schema step
+in [DEPLOYMENT.md](DEPLOYMENT.md); the deployment preflight remains in place.
+
+## Browser regression tests
+
+Install the browser runtime once after `npm ci`:
+
+```bash
+npx playwright install --with-deps chromium
+npm run build
+npm run test:browser
+```
+
+Run these commands in an environment with the Python requirements installed.
+Playwright starts `tests/browser_server.py`, which migrates a disposable SQLite
+database in a temporary directory and serves port 5174. It never migrates or
+changes your development database. Django's existing CI suite continues to run
+against PostgreSQL, including the concurrent quota test. Browser coverage runs
+in the same required CI check before image publication.
+
+For an already running **disposable test server**, set `BROWSER_BASE_URL` to its
+URL. Browser tests create temporary demo accounts and delete their own sessions
+on completion. Do not point them at production or a shared dataset.
+
+
+### Selection controls and action icons
+
+`src/select.js` progressively enhances single selects using vanilla JavaScript
+and the browser's Popover API. Django's native select remains the submitted
+value and validation source, and stays visible when JavaScript or popovers are
+unavailable. Enhanced controls support Arrow/Home/End keys, type-ahead,
+Enter/Space selection, and Escape without closing the surrounding window.
+Menus use the shared light/dark tokens and stay within the viewport.
+
+Record action icons use the existing local Lucide sprite. The shared window
+close control is icon-only and keeps its accessible name. The avatar menu only
+moves focus into its options for keyboard opening; pointer opening keeps focus
+on the avatar, and closed options are inert.
+
+Workspace content is temporarily inert during navigation and submission. The
+route state is committed before new content becomes interactive, preventing
+rapid clicks from opening records against a stale page or window origin.
+
+
+Window Back/Cancel links use `data-window-back`, not `data-window`. They reverse
+an existing transition instead of pushing another detail window into history.
+When a delete URL was opened directly, its Back/Cancel link replaces that entry
+with the detail URL; Close can then safely return to the collection.

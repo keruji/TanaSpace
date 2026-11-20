@@ -1,0 +1,6 @@
+<div class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4 sm:p-8">
+  <section class="modal-card relative w-full max-w-xl rounded-2xl bg-surface p-6 shadow-2xl sm:p-8" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="window-title" data-window-url="{{ request.path }}" data-return-url="{{ return_to }}">
+    <a class="modal-close" data-window-close href="{{ return_to }}" aria-label="Close window" title="Close window">{% include 'includes/icon.html' with icon_name='x' only %}</a>
+    {% block window_body %}{% endblock %}
+  </section>
+</div>

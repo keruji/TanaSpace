@@ -57,10 +57,6 @@
   padding: 12px;
   color: var(--text);
 }
-.item-form textarea:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 3px;
-}
 .item-list {
   list-style: none;
   margin-top: 25px;

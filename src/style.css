@@ -6,6 +6,7 @@
 @import "./css/dashboard.css";
 @import "./css/items.css";
 @import "./css/item_types.css";
+@import "./css/workspace.css";
 @source "../templates";
 
 :root {

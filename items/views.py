@@ -1,47 +1,81 @@
-from django.contrib.auth.decorators import login_required
+from urllib.parse import urlencode
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.cache import never_cache
+from django.http import HttpResponse, HttpResponseBadRequest
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
-from .forms import ItemForm
-from .models import Item
+from common.workspace import is_partial, mutation, return_url, workspace_render, workspace_view
 from item_types.models import ItemTypes
-
+from .forms import ItemForm, ItemSearchForm
+from .models import Item
 
 LIST_LIMIT = 40
 
 
-def page(request, *, form=None, selected_item=None, modal_mode=None):
-    items = Item.objects.filter(owner=request.user).select_related("item_type")
+def page(request, *, form=None, selected_item=None, modal_mode=None, favorites_only=False):
+    owned = Item.objects.filter(owner=request.user)
+    search = ItemSearchForm(request.GET, owner=request.user)
+    items = owned.select_related("item_type")
+    if favorites_only:
+        items = items.filter(is_favorite=True)
+    if search.is_valid():
+        if search.cleaned_data["q"]:
+            items = items.filter(name__icontains=search.cleaned_data["q"])
+        if search.cleaned_data["type"]:
+            items = items.filter(item_type=search.cleaned_data["type"])
+    else:
+        items = items.none()
     page_obj = Paginator(items, LIST_LIMIT).get_page(request.GET.get("page"))
-    return render(request, "items/index.html", {
-        "active_nav": "items",
-        "items": page_obj.object_list,
-        "page_obj": page_obj,
-        "item_count": page_obj.paginator.count,
-        "at_item_limit": page_obj.paginator.count >= settings.MAX_ITEMS_PER_USER,
-        "form": form,
-        "selected_item": selected_item,
-        "modal_mode": modal_mode,
+    base = reverse("items:favorites" if favorites_only else "items:index")
+    query = request.GET.copy()
+    query.pop("return_to", None)
+    query.pop("page", None)
+    pagination_query = query.urlencode()
+    page_url = base + ("?" + request.GET.urlencode() if request.GET and not modal_mode else "")
+    back = return_url(request, base)
+    title = "Favorites" if favorites_only else "My Tana"
+    count = owned.count()
+    context = {
+        "active_nav": "favorites" if favorites_only else "items", "page_url": page_url,
+        "items": page_obj.object_list, "page_obj": page_obj, "search_form": search,
+        "item_count": count, "result_count": page_obj.paginator.count,
+        "at_item_limit": count >= settings.MAX_ITEMS_PER_USER, "favorites_only": favorites_only,
+        "form": form, "selected_item": selected_item, "modal_mode": modal_mode,
         "needs_type": modal_mode == "create" and not ItemTypes.objects.filter(owner=request.user).exists(),
-    })
+        "return_to": back, "return_query": urlencode({"return_to": back}),
+        "pagination_query": pagination_query, "list_title": title,
+    }
+    if modal_mode:
+        title = {"create": "Add an item", "edit": "Edit item", "delete": "Delete item", "detail": selected_item.name if selected_item else "Item"}[modal_mode]
+    return workspace_render(request, "items/content.html", context, title=title + " · TanaSpace",
+                            window_template="items/window.html" if modal_mode else None)
 
 
-@never_cache
-@login_required
+@workspace_view
 @require_http_methods(["GET", "POST"])
 def index(request):
-    if request.method == "POST":
-        return create(request)
-    return page(request)
+    return create(request) if request.method == "POST" else page(request)
 
 
-@never_cache
-@login_required
+@workspace_view
+@require_http_methods(["GET"])
+def favorites(request):
+    return page(request, favorites_only=True)
+
+
+def saved_response(request, item):
+    if not is_partial(request):
+        return redirect("items:detail", pk=item.pk)
+    response = page(request, selected_item=item, modal_mode="detail")
+    return mutation(response, "items", url=reverse("items:detail", args=[item.pk]))
+
+
+@workspace_view
 @require_http_methods(["GET", "POST"])
 def create(request):
     form = ItemForm(request.POST if request.method == "POST" else None, owner=request.user)
@@ -52,21 +86,19 @@ def create(request):
                 item = form.save(commit=False)
                 item.owner = request.user
                 item.save()
-                return redirect("items:detail", pk=item.pk)
+                return saved_response(request, item)
         form.add_error(None, "You can save up to 100 items. Delete one before adding another.")
     return page(request, form=form, modal_mode="create")
 
 
-@never_cache
-@login_required
+@workspace_view
 @require_http_methods(["GET"])
 def detail(request, pk):
     item = get_object_or_404(Item.objects.select_related("item_type"), pk=pk, owner=request.user)
     return page(request, selected_item=item, modal_mode="detail")
 
 
-@never_cache
-@login_required
+@workspace_view
 @require_http_methods(["GET", "POST"])
 def edit(request, pk):
     item = get_object_or_404(Item, pk=pk, owner=request.user)
@@ -75,16 +107,31 @@ def edit(request, pk):
         item = form.save(commit=False)
         item.mark_edited(request.user)
         item.save()
-        return redirect("items:detail", pk=item.pk)
+        return saved_response(request, item)
     return page(request, form=form, selected_item=item, modal_mode="edit")
 
 
-@never_cache
-@login_required
+@workspace_view
 @require_http_methods(["GET", "POST"])
 def delete(request, pk):
     item = get_object_or_404(Item, pk=pk, owner=request.user)
     if request.method == "POST":
         item.delete()
-        return redirect("items:index")
+        if is_partial(request):
+            return mutation(HttpResponse(), "items", close=True)
+        return redirect(return_url(request, reverse("items:index")))
     return page(request, selected_item=item, modal_mode="delete")
+
+
+@workspace_view
+@require_http_methods(["POST"])
+def favorite(request, pk):
+    item = get_object_or_404(Item, pk=pk, owner=request.user)
+    desired = request.POST.get("favorite")
+    if desired not in {"true", "false"}:
+        return HttpResponseBadRequest("Choose a valid favorite state.")
+    Item.objects.filter(pk=item.pk, owner=request.user).update(is_favorite=desired == "true")
+    item.is_favorite = desired == "true"
+    if is_partial(request):
+        return mutation(page(request, selected_item=item, modal_mode="detail"), "items")
+    return redirect(return_url(request, reverse("items:detail", args=[item.pk])))

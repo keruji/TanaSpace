@@ -1,6 +1,7 @@
 from django import forms
 
 from .models import Item
+from item_types.models import ItemTypes
 
 
 class ItemForm(forms.ModelForm):
@@ -17,3 +18,12 @@ class ItemForm(forms.ModelForm):
             "description": forms.Textarea(attrs={"placeholder": "What is this item? (optional)", "rows": 3}),
             "notes": forms.Textarea(attrs={"placeholder": "Any details to remember (optional)", "rows": 4}),
         }
+
+
+class ItemSearchForm(forms.Form):
+    q = forms.CharField(max_length=160, required=False, label="Search items")
+    type = forms.ModelChoiceField(queryset=ItemTypes.objects.none(), required=False, label="Tana Type", empty_label="All types")
+
+    def __init__(self, *args, owner, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["type"].queryset = ItemTypes.objects.filter(owner=owner)

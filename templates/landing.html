@@ -418,7 +418,7 @@
     <p class="landing-footer-copyright">© {% now "Y" %} TanaSpace. All rights reserved.</p>
   </footer>
 
-  <script type="module" src="{% static 'app.js' %}"></script>
+  <script type="module" src="{% static 'app.js' %}?v={{ app_js_version }}"></script>
 </body>
 
 </html>
