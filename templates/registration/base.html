@@ -6,7 +6,10 @@
     {% include 'includes/logo.html' %}
     <span>TanaSpace</span>
   </a>
-  <a class="quiet-link" href="{% url 'landing' %}">{% include 'includes/icon.html' with icon_name='arrow-left' only %} Back to home</a>
+  <div class="auth-header-actions">
+    {% include 'includes/theme_toggle.html' %}
+    <a class="quiet-link" href="{% url 'landing' %}">{% include 'includes/icon.html' with icon_name='arrow-left' only %} Back to home</a>
+  </div>
 </header>
 <main id="main" class="auth-main">
   <div class="auth-intro">

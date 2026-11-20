@@ -21,10 +21,10 @@
   line-height: 1.6;
 }
 .items-count {
-  border: 1px solid #dfe4d9;
+  border: 1px solid var(--line);
   border-radius: 20px;
   padding: 7px 12px;
-  color: #677559;
+  color: var(--accent-text);
   font-size: 11px;
   white-space: nowrap;
 }
@@ -51,14 +51,14 @@
   width: 100%;
   min-height: 100px;
   resize: vertical;
-  background: #fafbf8;
-  border: 1px solid #dde1d5;
+  background: var(--quiet);
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px;
-  color: #30362a;
+  color: var(--text);
 }
 .item-form textarea:focus-visible {
-  outline: 3px solid #81986a;
+  outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
 .item-list {
@@ -90,11 +90,11 @@
 }
 .item-row:hover,
 .item-row:focus-visible {
-  background: #f6f8f3;
+  background: var(--soft);
 }
 .item-row:hover .item-details h3,
 .item-row:focus-visible .item-details h3 {
-  color: #526546;
+  color: var(--accent-text);
 }
 .item-symbol {
   flex: 0 0 34px;
@@ -102,8 +102,8 @@
   display: grid;
   place-items: center;
   border-radius: 9px;
-  background: #f3f5ef;
-  color: #7e8c6b;
+  background: var(--soft);
+  color: var(--accent-text);
   font-size: 17px;
 }
 .item-symbol .ui-icon {
@@ -120,19 +120,19 @@
   font-weight: 600;
 }
 .item-details h3 a:hover {
-  color: #526546;
+  color: var(--accent-text);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 .item-details p {
   overflow-wrap: anywhere;
-  color: #8e9486;
+  color: var(--muted);
   font-size: 11px;
   line-height: 1.6;
   margin-top: 6px;
 }
 .item-details .item-note {
-  color: #6f7669;
+  color: var(--muted);
 }
 .item-actions {
   display: flex;
@@ -142,12 +142,12 @@
   gap: 12px;
 }
 .item-row-arrow {
-  color: #7e8c6b;
+  color: var(--accent-text);
   font-size: 16px;
 }
 .item-list time {
   flex-shrink: 0;
-  color: #9a9e94;
+  color: var(--muted);
   font-size: 10px;
   white-space: nowrap;
 }
@@ -157,7 +157,7 @@
   align-items: flex-start;
   gap: 10px;
   padding: 34px 0 8px;
-  color: #8c9583;
+  color: var(--muted);
   font-size: 12px;
 }
 .empty-items > span {
@@ -166,7 +166,7 @@
   width: 42px;
   height: 42px;
   border-radius: 11px;
-  background: #f3f5ef;
+  background: var(--soft);
   font-size: 21px;
 }
 .empty-items > span .ui-icon {
@@ -174,7 +174,7 @@
   height: 22px;
 }
 .empty-items h3 {
-  color: #42493e;
+  color: var(--text);
   font-size: 15px;
   font-weight: 600;
 }
