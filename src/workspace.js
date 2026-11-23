@@ -21,6 +21,8 @@ export function initWorkspace() {
   let generation = 0, requestId = 0, writing = false, restoring = false, approvedPop = false, allowUnload = false;
   let state = history.state?.tana || { index: 0, url: location.pathname + location.search, origin: null, scroll: 0 };
   let opener;
+  let fieldSequence = 0, fieldXHR;
+  const fieldStates = new WeakMap(), fieldCaches = new WeakMap();
   const currentURL = () => location.pathname + location.search;
   const main = () => document.querySelector('#main');
   const dialog = () => document.querySelector('#modal-host [role="dialog"]');
@@ -44,6 +46,7 @@ export function initWorkspace() {
   }
   function hydrate({ focus = false, resetForms = false } = {}) {
     initSelects(view);
+    for (const editor of view.querySelectorAll('[data-property-editor]')) configureProperty(editor);
     for (const form of view.querySelectorAll('[data-dirty-check]')) {
       if (!baseline.has(form) || resetForms) baseline.set(form, formValue(form));
     }
@@ -64,17 +67,18 @@ export function initWorkspace() {
   }
   function supersede() {
     closeSelects();
+    fieldSequence++; fieldXHR?.abort();
     generation++;
     for (const { xhr, method } of pending.values()) if (method === 'get') xhr.abort();
   }
-  async function request(url, { target = 'workspace-view', method = 'GET', values, origin = '', onSwap } = {}) {
+  async function request(url, { target = 'workspace-view', method = 'GET', values, origin = '', onSwap, extraHeaders = {} } = {}) {
     const token = String(++requestId), ownGeneration = generation;
     if (onSwap) swapCallbacks.set(token, onSwap);
     try {
       await htmx.ajax(method, url, {
         source: document.querySelector(`#${target}`), target: `#${target}`,
         swap: target === 'main' ? 'outerHTML' : 'innerHTML', values,
-        headers: { 'X-Workspace-Token': token, 'X-Workspace-Generation': String(ownGeneration), 'X-Workspace-Return': origin },
+        headers: { 'X-Workspace-Token': token, 'X-Workspace-Generation': String(ownGeneration), 'X-Workspace-Return': origin, ...extraHeaders },
       });
       const success = outcomes.get(token);
       outcomes.delete(token);
@@ -147,10 +151,13 @@ export function initWorkspace() {
     const { xhr, requestConfig } = event.detail;
     const token = requestConfig.headers['X-Workspace-Token'];
     if (token) pending.set(token, { xhr, method: requestConfig.verb });
+    if (requestConfig.headers['X-Fields-Sequence']) fieldXHR = xhr;
   });
   document.addEventListener('htmx:beforeSwap', event => {
     closeSelects();
     const { xhr, requestConfig } = event.detail;
+    const fieldToken = requestConfig?.headers['X-Fields-Sequence'];
+    if (fieldToken && Number(fieldToken) !== fieldSequence) { event.detail.shouldSwap = false; event.detail.ignoreTitle = true; }
     const sent = requestConfig?.headers['X-Workspace-Generation'];
     if (sent !== undefined && Number(sent) !== generation) { event.detail.shouldSwap = false; event.detail.ignoreTitle = true; }
     // Commit route state before the returned controls become interactive.
@@ -188,7 +195,7 @@ export function initWorkspace() {
   });
   document.addEventListener('submit', async event => {
     const form = event.target;
-    if (form.hasAttribute('data-logout')) {
+    if (form.hasAttribute('data-logout') || form.hasAttribute('data-session-action')) {
       if (!mayLeave()) event.preventDefault();
       else allowUnload = true;
       return;
@@ -200,10 +207,18 @@ export function initWorkspace() {
     }
     if (!form.hasAttribute('data-async-form')) return;
     event.preventDefault();
+    if (event.submitter?.value === 'load_properties' && form.querySelector('#item-custom-fields')) {
+      await loadFields(form); return;
+    }
+    if (fieldStates.get(form) === 'loading' || fieldStates.get(form) === 'failed') {
+      message('Load the selected type’s properties before saving.'); return;
+    }
     if (writing) return;
+    const otherDirty = [...view.querySelectorAll('[data-dirty-check]')].some(other => other !== form && baseline.has(other) && baseline.get(other) !== formValue(other));
+    if (otherDirty && !confirm('Discard your unsaved changes?')) return;
     writing = true; message('Saving…');
     const oldBaseline = baseline.get(form);
-    const values = Object.fromEntries(new FormData(form));
+    const values = Object.fromEntries(new FormData(form, event.submitter));
     const buttons = [...form.querySelectorAll('button[type="submit"]')]; buttons.forEach(el => el.disabled = true);
     const target = form.closest('#modal-host') ? 'modal-host' : 'workspace-view';
     const submissionRegion = document.getElementById(target);
@@ -230,7 +245,7 @@ export function initWorkspace() {
       // A bound validation response must remain dirty relative to the pre-edit form.
       const replacement = view.querySelector('[data-dirty-check]');
       if (replacement && oldBaseline !== undefined) baseline.set(replacement, oldBaseline);
-      message('Please check the highlighted fields.'); return;
+      message(result.getResponseHeader('X-Workspace-Form-Updated') === 'true' ? '' : 'Please check the highlighted fields.'); return;
     }
     if (result.getResponseHeader('X-Workspace-Close') === 'true') {
       await closeWindow({ confirmed: true, toOrigin: true });
@@ -240,6 +255,51 @@ export function initWorkspace() {
     }
     message('Saved.');
   });
+
+  async function loadFields(form) {
+    if (writing) return;
+    const region = form.querySelector('#item-custom-fields');
+    if (!region) return;
+    const selected = form.elements.item_type.value;
+    const loaded = form.elements._loaded_type?.value || '';
+    const cache = fieldCaches.get(form) || new Map();
+    // Do not overwrite the last loaded type's draft while a replacement is pending.
+    if (fieldStates.get(form) !== 'loading' && fieldStates.get(form) !== 'failed') {
+      cache.set(loaded, Object.fromEntries([...new FormData(form)].filter(([key]) => key.startsWith('property_'))));
+    }
+    fieldCaches.set(form, cache);
+    const values = Object.fromEntries(new FormData(form));
+    for (const key of Object.keys(values)) if (key.startsWith('property_') || key === 'confirm_type_change') delete values[key];
+    if (cache.has(selected)) { Object.assign(values, cache.get(selected)); values._loaded_type = selected; }
+    else values._loaded_type = '';
+    const sequence = ++fieldSequence;
+    fieldXHR?.abort();
+    fieldStates.set(form, 'loading');
+    region.inert = true; region.setAttribute('aria-busy', 'true');
+    const saveButtons = [...form.querySelectorAll('button[type="submit"]:not([value="load_properties"])')];
+    saveButtons.forEach(button => button.disabled = true);
+    message('Loading properties…');
+    const ok = await request(region.dataset.fieldsUrl, { target: 'item-custom-fields', method: 'POST', values,
+      extraHeaders: { 'X-Fields-Sequence': String(sequence) } });
+    if (sequence !== fieldSequence || !region.isConnected) return;
+    region.inert = false; region.removeAttribute('aria-busy');
+    fieldStates.set(form, ok ? 'ready' : 'failed');
+    if (ok) { initSelects(region); saveButtons.forEach(button => button.disabled = false); message(); }
+    else message('Could not load properties. Use Load properties to retry before saving.');
+  }
+  function configureProperty(form) {
+    const kind = form.elements.data_type.value;
+    form.querySelector('[data-number-config]').hidden = kind !== 'number';
+    form.querySelector('[data-dropdown-config]').hidden = kind !== 'dropdown';
+  }
+  document.addEventListener('change', event => {
+    if (event.target.matches('[name="data_type"]') && event.target.closest('[data-property-editor]')) configureProperty(event.target.form);
+    if (event.target.matches('select[name="item_type"]')) {
+      const form = event.target.form;
+      if (form?.querySelector('#item-custom-fields')) loadFields(form);
+    }
+  });
+
   document.addEventListener('keydown', event => {
     const win = dialog();
     if (!win) return;

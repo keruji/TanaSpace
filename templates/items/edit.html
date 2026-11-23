@@ -11,7 +11,6 @@
   </div>
 
   <section class="panel item-form-panel item-edit-panel" aria-labelledby="edit-item-title">
-    <span class="eyebrow">Your collection</span>
     <h2 id="edit-item-title">{{ item.name }}</h2>
     <form method="post" action="{% url 'items:edit' item.pk %}" class="item-form">
       {% csrf_token %}

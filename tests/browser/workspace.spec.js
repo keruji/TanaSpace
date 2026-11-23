@@ -272,28 +272,33 @@ test.afterEach(async ({ page, context }) => {
   }
 });
 
-test('header links fit their contents and expanded/collapsed branding swaps positions', async ({ page }) => {
-  const bounds = selector => page.locator(selector).boundingBox();
-  const toggle = await bounds('[data-sidebar-toggle]');
-  const logo = await bounds('.sidebar-logo');
-  const name = await bounds('.workspace-name');
-  expect(toggle.x).toBeLessThan(logo.x);
-  expect(logo.x + logo.width).toBeLessThan(name.x);
-  expect(logo.width).toBeLessThanOrEqual(40);
-  expect(name.width).toBeLessThan(180);
-  expect(await page.locator('.workspace-brand').evaluate(el => el.tagName)).toBe('DIV');
-  const welcome = await bounds('.welcome-panel');
-  const summary = await bounds('.workspace-summary');
-  const activity = await bounds('.activity-panel');
-  expect(summary.y).toBeGreaterThan(welcome.y);
-  expect(summary.y).toBeLessThan(activity.y);
-  await expect(page.locator('.activity-panel .workspace-totals')).toHaveCount(0);
-  await page.locator('[data-sidebar-toggle]').click();
-  await expect(page.locator('.sidebar-logo')).toBeHidden();
-  await expect(page.locator('.compact-logo')).toBeVisible();
-  const expand = await bounds('[data-sidebar-toggle]');
-  const compact = await bounds('.compact-logo');
-  expect(compact.x).toBeGreaterThan(expand.x + expand.width);
+test('sidebar branding stays inside navigation when collapsed and expanded', async ({ page }) => {
+  const sidebar = page.locator('#workspace-sidebar');
+  const brand = sidebar.locator('.sidebar-brand');
+  const logo = brand.locator('.brand-logo');
+  const name = brand.locator('.sidebar-brand-name');
+  const toggle = page.locator('[data-sidebar-toggle]');
+  await expect(logo).toBeVisible();
+  await expect(name).toBeVisible();
+  const expandedSidebar = await sidebar.boundingBox();
+  const expandedLogo = await logo.boundingBox();
+  const expandedToggle = await toggle.boundingBox();
+  expect(expandedLogo.x).toBeGreaterThanOrEqual(expandedSidebar.x);
+  expect(expandedToggle.x).toBeGreaterThan(expandedLogo.x + expandedLogo.width);
+
+  await toggle.click();
+  await expect(page.locator('html')).toHaveAttribute('data-sidebar', 'collapsed');
+  await expect(name).toBeHidden();
+  await expect(logo).toBeVisible();
+  await expect.poll(async () => (await sidebar.boundingBox()).width).toBeLessThan(expandedSidebar.width);
+  const collapsedSidebar = await sidebar.boundingBox();
+  const collapsedToggle = await toggle.boundingBox();
+  expect(collapsedToggle.x).toBeGreaterThan(collapsedSidebar.x);
+
+  await toggle.click();
+  await expect(page.locator('html')).toHaveAttribute('data-sidebar', 'expanded');
+  await expect(name).toBeVisible();
+  await expect.poll(async () => Math.round((await sidebar.boundingBox()).width)).toBe(Math.round(expandedSidebar.width));
 });
 
 test('pointer opening the account menu does not autofocus the first option', async ({ page }) => {
@@ -328,6 +333,11 @@ test('themed select supports keyboard selection, Escape isolation, and form subm
   await expect(page.locator('select[name=item_type]')).toHaveValue('');
   await combo.click();
   const list = page.getByRole('listbox');
+  const dimensions = await list.evaluate(element => ({
+    scrollHeight: element.scrollHeight,
+    clientHeight: element.clientHeight,
+  }));
+  expect(dimensions.scrollHeight).toBe(dimensions.clientHeight);
   const box = await list.boundingBox();
   expect(box.x).toBeGreaterThanOrEqual(0);
   expect(box.y).toBeGreaterThanOrEqual(0);

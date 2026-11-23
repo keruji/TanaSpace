@@ -135,3 +135,22 @@ this release to deploy, separately review and approve the schema step:
 
 No production migration, deployment, or schema rollback is performed by the
 browser tests or normal image publication.
+
+
+## Custom property schema release
+
+This release adds `ItemTypeProperty`, `Item.property_values`, a Tana Type schema
+version, and the development-demo marker/access table. Existing items receive an
+empty JSON object, existing types receive version zero, and existing users remain
+non-development accounts. New fields have database defaults for old-release inserts;
+there is no category/data backfill. Keep `DEV_DEMO_ENABLED=false` in production.
+
+Use the separately reviewed schema process above for these additive migrations
+before deploying this image. Neither startup nor the deployment workflow applies
+them automatically. Do not automatically reverse migrations during rollback.
+
+Old application images do not enforce custom-property validation or confirmed type
+changes. Before opening custom-property writes to production, designate a rollback
+target containing this feature, or suspend item/type writes while an older image is
+running. Database defaults preserve old inserts but cannot supply the new validation
+behavior. Local migration execution does not authorize production migration/deploy.

@@ -31,6 +31,9 @@ def page(request, *, form=None, selected_type=None, modal_mode=None):
         "page_obj": page_obj,
         "type_count": page_obj.paginator.count,
         "at_type_limit": page_obj.paginator.count >= settings.MAX_ITEM_TYPES_PER_USER,
+        "properties": selected_type.properties.filter(archived_at__isnull=True) if selected_type else [],
+        "archived_properties": selected_type.properties.filter(archived_at__isnull=False) if selected_type else [],
+        "incomplete_items": incomplete_count(selected_type) if selected_type else 0,
         "form": form,
         "selected_type": selected_type,
         "modal_mode": modal_mode,
@@ -70,7 +73,10 @@ def detail(request, pk):
 
 @workspace_view
 @require_http_methods(["GET", "POST"])
+@transaction.atomic
 def edit(request, pk):
+    if request.method == "POST":
+        get_user_model().objects.select_for_update().get(pk=request.user.pk)
     item_type = get_object_or_404(ItemTypes, pk=pk, owner=request.user)
     form = ItemTypeForm(request.POST if request.method == "POST" else None, instance=item_type)
     if request.method == "POST" and form.is_valid():
@@ -83,7 +89,10 @@ def edit(request, pk):
 
 @workspace_view
 @require_http_methods(["GET", "POST"])
+@transaction.atomic
 def delete(request, pk):
+    if request.method == "POST":
+        get_user_model().objects.select_for_update().get(pk=request.user.pk)
     item_type = get_object_or_404(ItemTypes, pk=pk, owner=request.user)
     if request.method == "POST":
         try:
@@ -104,3 +113,9 @@ def saved_response(request, item_type):
         return redirect("item_types:detail", pk=item_type.pk)
     return mutation(page(request, selected_type=item_type, modal_mode="detail"), "types",
                     url=reverse("item_types:detail", args=[item_type.pk]))
+
+
+def incomplete_count(item_type):
+    required = [str(prop.pk) for prop in item_type.properties.filter(required=True, archived_at__isnull=True)]
+    return sum(any(item.property_values.get(key) is None or item.property_values.get(key) == "" for key in required)
+               for item in item_type.items.only("property_values")) if required else 0

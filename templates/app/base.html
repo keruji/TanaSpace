@@ -2,23 +2,17 @@
 {% block body_class %}workspace{% endblock %}
 {% block content %}
 <header class="app-header">
-  <div class="sidebar-heading">
-    <button class="icon-button sidebar-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="true" aria-label="Collapse navigation" hidden>
-      <span class="sidebar-icon-collapse">{% include 'includes/icon.html' with icon_name='panel-left-close' only %}</span>
-      <span class="sidebar-icon-expand">{% include 'includes/icon.html' with icon_name='panel-left-open' only %}</span>
-    </button>
-    <a class="sidebar-logo" href="{% url 'dashboard:index' %}" aria-label="TanaSpace dashboard">{% include 'includes/logo.html' %}</a>
-  </div>
-  <div class="workspace-brand">
-    <a class="compact-logo" href="{% url 'dashboard:index' %}" aria-label="TanaSpace dashboard">{% include 'includes/logo.html' %}</a>
-    <a class="brand workspace-name" href="{% url 'dashboard:index' %}">TanaSpace</a>
-  </div>
+  <button class="icon-button sidebar-toggle" type="button" data-sidebar-toggle aria-controls="workspace-sidebar" aria-expanded="true" aria-label="Collapse navigation" hidden>
+    <span class="sidebar-icon-collapse">{% include 'includes/icon.html' with icon_name='chevron-down' only %}</span>
+    <span class="sidebar-icon-expand">{% include 'includes/icon.html' with icon_name='chevron-down' only %}</span>
+    <span class="sidebar-icon-mobile">{% include 'includes/icon.html' with icon_name='panel-left-open' only %}</span>
+  </button>
   <div class="header-actions">
-    {% include 'includes/theme_toggle.html' %}
     <form class="header-search" method="get" action="{% url 'items:index' %}" role="search" data-workspace-search>
       <input name="q" type="search" maxlength="160" placeholder="Search items" aria-label="Search items">
       <button type="submit" class="icon-button" aria-label="Search">{% include 'includes/icon.html' with icon_name='search' only %}</button>
     </form>
+    {% include 'includes/theme_toggle.html' %}
     <div class="account-control">
       <button class="icon-button" type="button" id="account-toggle" aria-controls="account-menu" aria-expanded="false" aria-haspopup="menu" aria-label="Account menu" hidden>
         {% include 'includes/icon.html' with icon_name='user-round' icon_class='avatar' only %}
@@ -29,6 +23,7 @@
           <a role="menuitem" href="{% url 'accounts:profile' %}">Profile</a>
           <a role="menuitem" href="{% url 'accounts:settings' %}">Settings</a>
           <hr>
+          {% if can_reset_demo %}<a role="menuitem" href="{% url 'accounts:reset_demo' %}" data-window>Reset Demo <span class="development-label">Development</span></a>{% endif %}
           <form method="post" action="{% url 'accounts:logout' %}" data-logout>{% csrf_token %}<button role="menuitem" type="submit">Log out</button></form>
         </div>
       </div>
@@ -37,7 +32,12 @@
 </header>
 <div class="app-layout">
   <aside class="sidebar" id="workspace-sidebar" aria-label="Workspace navigation">
-    <button class="icon-button drawer-close" type="button" data-sidebar-close hidden aria-label="Close navigation">{% include 'includes/icon.html' with icon_name='x' only %}</button>
+    <div class="sidebar-heading">
+      <a class="brand sidebar-brand" href="{% url 'dashboard:index' %}" aria-label="TanaSpace dashboard">
+        {% include 'includes/logo.html' %}<span class="sidebar-brand-name">TanaSpace</span>
+      </a>
+      <button class="icon-button drawer-close" type="button" data-sidebar-close hidden aria-label="Close navigation">{% include 'includes/icon.html' with icon_name='x' only %}</button>
+    </div>
     <nav aria-label="Main navigation">
       <a data-nav="dashboard" class="nav-item{% if active_nav == 'dashboard' %} active{% endif %}" href="{% url 'dashboard:index' %}" aria-label="Dashboard" {% if active_nav == 'dashboard' %}aria-current="page"{% endif %}>
         <span>{% include 'includes/icon.html' with icon_name='layout-dashboard' only %}</span><span class="nav-label">Dashboard</span><span class="nav-tooltip" aria-hidden="true">Dashboard</span>
@@ -49,7 +49,6 @@
         <span>{% include 'includes/icon.html' with icon_name='star' only %}</span><span class="nav-label">Favorites</span><span class="nav-tooltip" aria-hidden="true">Favorites</span>
       </a>
     </nav>
-    <div class="sidebar-footer"><span class="eyebrow">A place for everything.</span></div>
   </aside>
   <div class="drawer-scrim" data-sidebar-close hidden></div>
   <div id="workspace-view" hx-history-elt hx-history="false">{% block app_main %}{% endblock %}</div>

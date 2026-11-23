@@ -40,6 +40,7 @@
   --text: var(--color-prussian-blue-950);
   --muted: var(--color-prussian-blue-700);
   --line: var(--color-prussian-blue-100);
+  --control-line: var(--color-prussian-blue-400);
   --accent: var(--color-prussian-blue-600);
   --accent-hover: var(--color-prussian-blue-700);
   --on-accent: #fff;
@@ -51,6 +52,12 @@
   --danger-text: #9d3e35;
   --danger-soft: #fff3f0;
   --shadow: color-mix(in srgb, var(--color-prussian-blue-950) 8%, transparent);
+  --shelf: var(--color-prussian-blue-800);
+  --shelf-text: var(--color-prussian-blue-50);
+  --shelf-muted: var(--color-prussian-blue-100);
+  --shelf-gold: var(--color-prussian-blue-300);
+  --font-body: "DM Sans", "Segoe UI", sans-serif;
+  --font-display: "Bricolage Grotesque", "Segoe UI", sans-serif;
 }
 
 :root[data-theme="dark"] {
@@ -62,8 +69,10 @@
   --text: var(--color-prussian-blue-50);
   --muted: var(--color-prussian-blue-200);
   --line: var(--color-prussian-blue-800);
+  --control-line: var(--color-prussian-blue-400);
   --accent: var(--color-prussian-blue-500);
   --accent-hover: var(--color-prussian-blue-600);
+  --on-accent: #fff;
   --accent-soft: var(--color-prussian-blue-800);
   --accent-text: var(--color-prussian-blue-200);
   --focus: var(--color-prussian-blue-300);
@@ -72,4 +81,5 @@
   --danger-text: #ffb4ab;
   --danger-soft: #391e22;
   --shadow: color-mix(in srgb, var(--color-prussian-blue-950) 40%, transparent);
+  --shelf: var(--color-prussian-blue-800);
 }

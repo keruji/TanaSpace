@@ -5,180 +5,23 @@
 @import "./css/auth.css";
 @import "./css/dashboard.css";
 @import "./css/items.css";
-@import "./css/item_types.css";
 @import "./css/workspace.css";
+@import "./css/landing.css";
 @source "../templates";
-
-:root {
-  --preview-height: 0px;
-  --sticky-offset: 0px;
-}
 
 .theme-toggle {
   display: inline-grid;
   place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
   border: 1px solid var(--line);
-  border-radius: 0.6rem;
-  background: var(--soft);
+  border-radius: .55rem;
+  background: var(--surface);
   color: var(--muted);
-  cursor: pointer;
-  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
 }
-
-.theme-toggle:hover { color: var(--accent-text); border-color: var(--accent); background: var(--accent-soft); }
-.theme-toggle:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; border-radius: 4px; }
+.theme-toggle:hover { color: var(--accent-text); background: var(--soft); }
 .theme-toggle .ui-icon { width: 1.15rem; height: 1.15rem; }
 .theme-icon-sun { display: none; }
 :root[data-theme="dark"] .theme-icon-sun { display: inline-flex; }
 :root[data-theme="dark"] .theme-icon-moon { display: none; }
-
-.preview-item-card { background: var(--accent-soft); color: var(--text); }
-.preview-item-card:nth-child(2), .preview-item-card:nth-child(4) { background: var(--soft); }
-.preview-item-card:nth-child(3) { background: var(--quiet); }
-.preview-item-meta { color: var(--muted); }
-
-.landing-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
-
-.brand-logo {
-  display: block;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  object-fit: contain;
-}
-
-#preview-bar {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background-color: var(--accent);
-}
-
-#site-header {
-  position: sticky;
-  top: var(--preview-height);
-  z-index: 40;
-  background-color: var(--surface);
-  backdrop-filter: blur(12px);
-}
-
-@media (min-width: 1024px) and (min-height: 760px) {
-  html.landing-page {
-    scroll-behavior: smooth;
-    scroll-padding-top: var(--sticky-offset);
-  }
-
-  html.landing-page[data-scroll-ready] {
-    scroll-snap-type: y mandatory;
-  }
-
-  html.landing-page main > section {
-    min-height: calc(100svh - var(--sticky-offset));
-    scroll-snap-align: start;
-  }
-}
-
-.scroll-reveal-line {
-  display: block;
-}
-
-.scroll-reveal-ready > .scroll-reveal-line,
-[data-scroll-reveal="element"].scroll-reveal-ready {
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
-  transition-delay: var(--reveal-delay, 0s);
-}
-
-.scroll-reveal-ready.is-revealed > .scroll-reveal-line,
-[data-scroll-reveal="element"].scroll-reveal-ready.is-revealed,
-[data-scroll-reveal="element"].scroll-reveal-ready:focus-within {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.landing-page {
-    scroll-behavior: auto;
-  }
-
-  .scroll-reveal-ready > .scroll-reveal-line,
-  [data-scroll-reveal="element"].scroll-reveal-ready {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-}
-
-.landing-footer {
-  padding: clamp(3rem, 6vw, 6rem) 1.5rem 2rem;
-  border-top: 1px solid var(--line);
-  background: var(--surface);
-}
-
-.landing-footer-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  max-width: 69rem;
-  margin-inline: auto;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--line);
-}
-
-.landing-footer-copyright {
-  max-width: 69rem;
-  margin: 1.5rem auto 0;
-  color: var(--muted);
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
-
-.landing-footer-brand {
-  color: var(--text);
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.landing-footer-brand .brand-logo {
-  width: 40px;
-  height: 40px;
-}
-
-.landing-footer-github {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--soft);
-  color: var(--muted);
-  transition: background-color 150ms ease, color 150ms ease;
-}
-
-.landing-footer-github:hover {
-  background: var(--accent-soft);
-  color: var(--accent-text);
-}
-
-.landing-footer a:focus-visible {
-  outline: 3px solid var(--accent-text);
-  outline-offset: 4px;
-}
-
-@media (min-width: 1024px) and (min-height: 760px) {
-  .landing-footer {
-    scroll-snap-align: end;
-  }
-}

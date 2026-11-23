@@ -50,17 +50,18 @@ queries to the signed-in user; creating a model does not add those rules.
 | `templates/dashboard/`, `templates/items/`, `templates/registration/` | Page HTML. |
 | `templates/includes/` | Reused logo and form-field markup. |
 | `templates/landing.html` | Public landing page at `/`. |
-| `src/css/global.css` | Shared page shell, form, and modal styles. |
-| `src/css/auth.css`, `dashboard.css`, `items.css`, `item_types.css` | Styles owned by their page or module; Vite compiles them together. |
+| `src/css/global.css` | Shared typography, buttons, and form controls. |
+| `src/css/workspace.css` | Workspace shell, record windows, and custom selection controls. |
+| `src/css/auth.css`, `dashboard.css`, `items.css`, `landing.css` | Styles owned by their page or module; Vite compiles them together. |
 | `static/images/` | Logo and the local Lucide icon sprite; add future static images here. |
-| `src/style.css`, `src/main.js` | Shared Tailwind entry plus landing styles and JavaScript. Vite builds these into `dist/app.css` and `dist/app.js`. |
+| `src/style.css`, `src/main.js` | Shared frontend stylesheet and JavaScript entry points. Vite builds these into `dist/app.css` and `dist/app.js`. |
 | `docker-compose.yml`, `Dockerfile` | Local containers and image build. |
 | `tests.py` in each app | Checks for that app's behavior. |
 
 All templates can use Tailwind utilities. The frontend watcher compiles
 `src/style.css` into `dist/app.css`; `@source "../templates"` scans the Django
 templates. `templates/base.html` and the landing page load that output.
-Landing-specific rules stay in `src/style.css`; shared rules stay in
+Landing-specific rules live in `src/css/landing.css`. Shared rules live in
 `src/css/global.css`, and each module has its own source stylesheet. All of
 these files run through Vite, so they can use Tailwind directives such as
 `@apply`. The browser receives one compiled `dist/app.css` file.
@@ -93,11 +94,12 @@ Copy `.env.example` to `.env` and set a long random `POSTGRES_PASSWORD`, then ru
 docker compose up --build -d
 ```
 
-Open <http://localhost:5173> and click **Demo**. This creates a temporary demo
+Open <http://localhost:5173> and click **Demo**. By default, this creates a temporary demo
 user named `demo` plus nine digits and opens `/tana`. Its session expires after
 one hour. Logging out removes the demo user and its data immediately; a small
 cleanup loop deletes expired demo accounts every five minutes. At most 25 demo
-accounts can be active at once by default. Public login and signup
+accounts can be active at once by default. To keep local test data across logout,
+opt into **Persistent development demos** below. Public login and signup
 are temporarily disabled. The port is 5173 because Compose maps it to Django's
 port 8000 inside the container.
 
@@ -280,14 +282,14 @@ npm run test:browser
 ```
 
 Run these commands in an environment with the Python requirements installed.
-Playwright starts `tests/browser_server.py`, which migrates a disposable SQLite
-database in a temporary directory and serves port 5174. It never migrates or
+Playwright starts `tests/browser_server.py` twice, using separate temporary SQLite
+databases on ports 5174 (public demo) and 5175 (development demo). It never migrates or
 changes your development database. Django's existing CI suite continues to run
 against PostgreSQL, including the concurrent quota test. Browser coverage runs
 in the same required CI check before image publication.
 
-For an already running **disposable test server**, set `BROWSER_BASE_URL` to its
-URL. Browser tests create temporary demo accounts and delete their own sessions
+For already running **disposable test servers**, set `BROWSER_BASE_URL` and
+`BROWSER_DEV_BASE_URL` to their respective URLs. Browser tests create temporary demo accounts and delete their own sessions
 on completion. Do not point them at production or a shared dataset.
 
 
@@ -314,3 +316,79 @@ Window Back/Cancel links use `data-window-back`, not `data-window`. They reverse
 an existing transition instead of pushing another detail window into history.
 When a delete URL was opened directly, its Back/Cancel link replaces that entry
 with the detail URL; Close can then safely return to the collection.
+
+
+## Custom Tana Type properties
+
+Settings → Manage Tana Types → Edit type includes **Custom Properties**. Save a
+new type first, then add properties. Text, Number, Date, Boolean, and single-choice
+Dropdown fields are supported. Required fields show an asterisk; optional checkboxes
+save an unchecked value as No. Required Boolean properties require an explicit
+Yes/No answer. Numbers allow eight integer digits and four decimal places; they
+are JSON numbers and are not an exact financial calculation system.
+
+Definitions use stable UUIDs; renaming fields or dropdown options preserves values.
+Move up/down controls change display order. Archive removes fields/options from
+new entry without erasing saved values. Item details show archived property values
+in a separate section. Archived dropdown selections may remain unchanged on their
+existing item. A property's data type cannot change while it has saved values;
+numeric bounds cannot be tightened past existing values. Adding a required field
+leaves existing records intact and requires completion on their next save.
+
+Each type supports 20 active / 50 total properties, and each dropdown supports 50
+options including archived options. Existing 100-item and 20-type quotas remain.
+Changing an item's type never matches fields by name: confirm clearing all previous
+custom values, including archived ones, and complete the destination fields. Data
+is cleared only on a fully valid save. Without JavaScript, select the type and click
+**Load properties**, then fill its fields and Save.
+
+`item_types/properties.py` centralizes definition-aware fields and serialization.
+`item_types/property_views.py` handles owner-scoped, transactional management.
+`items/forms.py` builds dynamic fields; it never accepts a raw JSON mapping from
+clients. The POST-only custom-fields endpoint renders HTML without saving. Form
+schema versions reject stale writes. The frontend replaces only that field region,
+keeps core drafts, ignores old responses, and blocks Save until loading succeeds.
+
+## Persistent development demos
+
+This feature is opt-in. In your local `.env`, set:
+
+```dotenv
+DJANGO_DEBUG=true
+DEV_DEMO_ENABLED=true
+```
+
+Then recreate the application container to load its environment:
+
+```bash
+docker compose up -d app
+```
+
+The existing **Demo** button creates a development account on first use. Logout
+ends authentication and returns to the landing page without deleting its data.
+Click Demo again in the same browser to resume it. The private 30-day HttpOnly,
+SameSite=Strict cookie is scoped to `/accounts/demo/`; only a token hash is stored
+in the database. No account credentials are stored in localStorage or URLs.
+
+**Reset Demo · Development**, above Log out, opens a confirmation window. Its
+CSRF-protected POST clears the current demo's items, types, and property definitions
+in place, preserves profile/identity, rotates the resume credential, and leaves the
+account signed in. No templates or initial categories are generated.
+
+Losing, clearing, or expiring the cookie creates a new development demo on the next
+Demo click; the old account stays stored. To remove an abandoned account locally,
+use `python manage.py shell` inside the app container, select the precise
+`is_demo=True, is_development_demo=True` user, delete its owned Items first, then
+its user record. Do not use this procedure against production.
+
+Development accounts are excluded from public expiry cleanup and public capacity.
+Public demos retain their one-hour expiry and deletion on logout. Existing temporary
+demos are not converted. Turning the flag off does not delete development data.
+Both DEBUG and the explicit flag are required; production configuration rejects the
+flag. Do not enable it on shared or publicly reachable environments.
+
+Browser tests now use two disposable databases: normal workspace scenarios on
+5174 and development-demo scenarios on 5175. `npm run test:browser` starts both;
+neither uses the local development database. With externally managed test servers,
+set `BROWSER_BASE_URL` and `BROWSER_DEV_BASE_URL`. `BROWSER_TEST_PORT` chooses the
+helper's port; `BROWSER_TEST_DEV_DEMO=true` explicitly enables its development mode.

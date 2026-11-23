@@ -123,15 +123,22 @@ export function initSelects(root) {
       closeSelects();
       const rect = button.getBoundingClientRect();
       const below = innerHeight - rect.bottom - 12, above = rect.top - 12;
-      const desired = Math.min(240, nodes.length * 40 + 12);
-      const up = below < Math.min(desired, 160) && above > below;
-      const height = Math.max(40, Math.min(desired, up ? above : below));
       const width = Math.min(rect.width, innerWidth - 24);
       list.style.width = `${width}px`;
-      list.style.maxHeight = `${height}px`;
+      list.style.maxHeight = 'none';
       list.style.left = `${Math.max(12, Math.min(rect.left, innerWidth - width - 12))}px`;
-      list.style.top = `${up ? rect.top - height - 6 : rect.bottom + 6}px`;
+      list.style.top = '0px';
+      list.style.visibility = 'hidden';
       list.showPopover();
+
+      // Measure the rendered options, including wrapping, padding, and borders.
+      const desired = Math.min(240, Math.ceil(list.getBoundingClientRect().height));
+      const up = below < Math.min(desired, 160) && above > below;
+      const height = Math.max(40, Math.min(desired, up ? above : below));
+      list.style.maxHeight = `${height}px`;
+      const actualHeight = list.getBoundingClientRect().height;
+      list.style.top = `${up ? rect.top - actualHeight - 6 : rect.bottom + 6}px`;
+      list.style.visibility = '';
       opened = true;
       button.setAttribute('aria-expanded', 'true');
       active = { root: container, list, close, commit };

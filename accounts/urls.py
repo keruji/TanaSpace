@@ -1,7 +1,7 @@
 from django.urls import path
 from django.views.generic import RedirectView
 
-from .views import DemoLogoutView, start_demo, profile, account_settings
+from .views import DemoLogoutView, start_demo, profile, account_settings, reset_demo
 
 app_name = "accounts"
 urlpatterns = [
@@ -12,6 +12,7 @@ urlpatterns = [
 ]
 
 workspace_patterns = [
+    path("demo/reset/", reset_demo, name="reset_demo"),
     path("profile/", profile, name="profile"),
     path("settings/", account_settings, name="settings"),
 ]

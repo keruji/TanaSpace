@@ -1,0 +1,8 @@
+{{ form.schema_version }}
+<input type="hidden" name="_loaded_type" value="{% if form.selected_type %}{{ form.selected_type.pk }}{% endif %}">
+{% if form.custom_fields %}<h3>Custom Properties</h3>{% endif %}
+{% for field in form.custom_fields %}{% include 'includes/field.html' %}{% endfor %}
+{% if form.type_change_has_values %}
+<p class="form-errors">Saving this Tana Type change permanently clears the previous type's custom values, including archived values. Core item fields are kept.</p>
+{% include 'includes/field.html' with field=form.confirm_type_change %}
+{% endif %}

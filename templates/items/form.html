@@ -1,0 +1,5 @@
+{% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+{% for field in form.core_fields %}{% include 'includes/field.html' %}{% endfor %}
+{% if selected_item %}<input type="hidden" name="_item_id" value="{{ selected_item.pk }}">{% endif %}
+<button class="text-action load-properties" type="submit" name="_action" value="load_properties" formnovalidate>Load properties</button>
+<div id="item-custom-fields" class="item-custom-fields" data-fields-url="{% url 'items:custom_fields' %}">{% include 'items/custom_fields.html' %}</div>

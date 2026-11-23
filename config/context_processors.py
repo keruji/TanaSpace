@@ -6,5 +6,6 @@ def app_css_version(request):
     stylesheets = list((settings.BASE_DIR / "src" / "css").glob("*.css"))
     stylesheets.append(settings.BASE_DIR / "src" / "style.css")
     scripts = list((settings.BASE_DIR / "src").rglob("*.js")) + [settings.BASE_DIR / "package-lock.json"]
-    return {"app_css_version": max(path.stat().st_mtime_ns for path in stylesheets),
+    from accounts.development_demo import eligible
+    return {"can_reset_demo": eligible(request.user), "app_css_version": max(path.stat().st_mtime_ns for path in stylesheets),
             "app_js_version": max(path.stat().st_mtime_ns for path in scripts)}

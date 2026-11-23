@@ -1,138 +1,96 @@
 <main data-page-title="Dashboard · TanaSpace" id="main" tabindex="-1" data-active-nav="dashboard" data-page-url="{{ page_url }}" class="dashboard-grid">
-  <section class="panel welcome-panel" aria-labelledby="dashboard-title">
-    <div class="panel-heading">
-      <span class="eyebrow">Your everyday, in one place</span>
-      <time>{% now 'D, M j' %}</time>
-    </div>
-    <h1 id="dashboard-title">
-      Welcome home,<br>
-      <span>{{ user.display_name }}.</span>
-    </h1>
-    <p>
-      A little space to see what you have,<br class="desktop-break">
-      and make room for what’s next.
-    </p>
-    <div class="welcome-footer">
-      <span class="status-dot"></span>
-      Your space is ready
-      <a class="text-action action-with-icon" href="{% url 'items:create' %}?return_to={{ page_url|urlencode }}" data-window>
+  <section class="welcome-panel" aria-labelledby="dashboard-title">
+    <div class="welcome-content">
+      <time class="welcome-date" datetime="{% now 'Y-m-d' %}">{% now 'l, F j' %}</time>
+      <h1 id="dashboard-title">Welcome home,<br>
+      {{ user.display_name }}.</h1>
+      <p>A place for the things you want to keep track of.</p>
+      <a class="primary-button action-with-icon" href="{% url 'items:create' %}?return_to={{ page_url|urlencode }}" data-window>
         {% include 'includes/icon.html' with icon_name='plus' only %}<span>Add an item</span>
       </a>
     </div>
+    <div class="welcome-shelf" aria-hidden="true">
+      <div class="shelf-objects shelf-objects-top"><i></i><i></i><i></i></div>
+      <div class="shelf-objects shelf-objects-bottom"><i></i><i></i><i></i></div>
+    </div>
   </section>
 
-  <section class="panel workspace-summary" aria-labelledby="workspace-summary-title">
-    <div class="panel-heading"><h2 id="workspace-summary-title">Your collection</h2></div>
+  <section class="workspace-summary" aria-labelledby="workspace-summary-title">
+    <h2 class="sr-only" id="workspace-summary-title">Your collection</h2>
     <div class="workspace-totals">
-      <a href="{% url 'items:index' %}"><strong>{{ totals.items }}</strong> Items</a>
-      <a href="{% url 'item_types:index' %}"><strong>{{ type_total }}</strong> Types</a>
-      <a href="{% url 'items:favorites' %}"><strong>{{ totals.favorites }}</strong> Favorites</a>
+      <a href="{% url 'items:index' %}">
+        <span class="item-symbol">{% include 'includes/icon.html' with icon_name='package' only %}</span>
+        <span><strong>{{ totals.items }}</strong><span>Items</span></span>
+      </a>
+      <a href="{% url 'item_types:index' %}">
+        <span class="item-symbol">{% include 'includes/icon.html' with icon_name='notebook-tabs' only %}</span>
+        <span><strong>{{ type_total }}</strong><span>Types</span></span>
+      </a>
+      <a href="{% url 'items:favorites' %}">
+        <span class="item-symbol">{% include 'includes/icon.html' with icon_name='star' only %}</span>
+        <span><strong>{{ totals.favorites }}</strong><span>Favorites</span></span>
+      </a>
     </div>
-  </section>
-
-  <section class="panel activity-panel" aria-labelledby="activity-title">
-    <div class="panel-heading">
-      <h2 id="activity-title">Recent activity</h2>
-      <span class="tag">Account</span>
-    </div>
-    <p class="section-caption">The beginning of something organized.</p>
-    <ol class="activity-list">
-      {% if user.last_login %}
-      <li>
-        <span class="activity-icon">{% include 'includes/icon.html' with icon_name='log-in' only %}</span>
-        <div>
-          <h3>Signed in to TanaSpace</h3>
-          <p>Your dashboard is ready for you.</p>
-        </div>
-        <time datetime="{{ user.last_login|date:'c' }}">
-          {{ user.last_login|date:'M j, Y · H:i' }}
-        </time>
-      </li>
-      {% endif %}
-      <li>
-        <span class="activity-icon">{% include 'includes/icon.html' with icon_name='check' only %}</span>
-        <div>
-          <h3>Your space was created</h3>
-          <p>A place for the things that matter.</p>
-        </div>
-        <time datetime="{{ user.date_joined|date:'c' }}">
-          {{ user.date_joined|date:'M j, Y · H:i' }}
-        </time>
-      </li>
-    </ol>
-
   </section>
 
   <section class="panel items-preview-panel" aria-labelledby="recent-items-title">
     <div class="panel-heading">
-      <h2 id="recent-items-title">My items</h2>
-      <a class="text-action" href="{% url 'items:index' %}">
-        View all {% include 'includes/icon.html' with icon_name='arrow-up-right' only %}
-      </a>
+      <h2 id="recent-items-title">Recent items</h2>
+      <a class="text-action" href="{% url 'items:index' %}">View all <span class="sr-only">items</span></a>
     </div>
     {% if recent_items %}
-    <ul class="item-list compact-item-list">
+    <ul class="item-list">
       {% for item in recent_items %}
       <li>
-        <span class="item-symbol">{% include 'includes/icon.html' with icon_name='package' only %}</span>
-        <div class="item-details">
-          <h3><a href="{% url 'items:detail' item.pk %}?return_to={{ page_url|urlencode }}" data-window>{{ item.name }}</a></h3>
-          {% if item.description %}
-          <p>{{ item.description|truncatechars:90 }}</p>
-          {% elif item.notes %}
-          <p>{{ item.notes|truncatechars:90 }}</p>
-          {% endif %}
-        </div>
+        <a class="item-row" href="{% url 'items:detail' item.pk %}?return_to={{ page_url|urlencode }}" data-window>
+          <span class="item-symbol">{% include 'includes/icon.html' with icon_name='package' only %}</span>
+          <div class="item-details">
+            <h3>{{ item.name }}</h3>
+            <p>{{ item.item_type.name }}</p>
+            {% if item.description %}<p>{{ item.description|truncatechars:90 }}</p>
+            {% elif item.notes %}<p>{{ item.notes|truncatechars:90 }}</p>{% endif %}
+          </div>
+          {% include 'includes/icon.html' with icon_name='chevron-down' icon_class='row-chevron' only %}
+        </a>
       </li>
       {% endfor %}
     </ul>
     {% else %}
     <div class="empty-items">
-      <span>{% include 'includes/icon.html' with icon_name='package' only %}</span>
-      <p>No items saved yet.</p>
-      <a class="primary-button action-with-icon" href="{% url 'items:create' %}?return_to={{ page_url|urlencode }}" data-window>
+      <span class="empty-icon">{% include 'includes/icon.html' with icon_name='package' only %}</span>
+      <h3>No items saved yet</h3>
+      <p>Save a device, a tool, or something else you’d like to keep track of.</p>
+      <a class="secondary-button action-with-icon" href="{% url 'items:create' %}?return_to={{ page_url|urlencode }}" data-window>
         {% include 'includes/icon.html' with icon_name='plus' only %}<span>Add your first item</span>
       </a>
     </div>
     {% endif %}
   </section>
 
-  <aside class="panel account-panel" aria-labelledby="account-title">
-    <div class="panel-heading">
-      <h2 id="account-title">Your space</h2>
-      <span>{% include 'includes/icon.html' with icon_name='arrow-up-right' only %}</span>
-    </div>
-    {% include 'includes/icon.html' with icon_name='user-round' icon_class='profile-avatar' only %}
-    <h3 class="profile-name">{{ user.display_name }}</h3>
-    <p class="section-caption">A fresh start. All yours.</p>
-    <dl class="account-details">
+  <div class="dashboard-side">
+    <section class="panel activity-panel" aria-labelledby="activity-title">
+      <div class="panel-heading"><h2 id="activity-title">Account activity</h2></div>
+      <ol class="activity-list">
+        {% if user.last_login %}
+        <li>
+          <span class="activity-icon">{% include 'includes/icon.html' with icon_name='log-in' only %}</span>
+          <div><h3>Signed in to TanaSpace</h3><time datetime="{{ user.last_login|date:'c' }}">{{ user.last_login|date:'M j, Y, H:i' }}</time></div>
+        </li>
+        {% endif %}
+        <li>
+          <span class="activity-icon">{% include 'includes/icon.html' with icon_name='check' only %}</span>
+          <div><h3>Your space was created</h3><time datetime="{{ user.date_joined|date:'c' }}">{{ user.date_joined|date:'M j, Y, H:i' }}</time></div>
+        </li>
+      </ol>
+    </section>
+
+    <aside class="panel account-panel" aria-labelledby="account-title">
+      <span class="item-symbol">{% include 'includes/icon.html' with icon_name='user-round' only %}</span>
       <div>
-        <dt>Username</dt>
-        <dd>{{ user.username }}</dd>
+        <h2 id="account-title">{{ user.display_name }}</h2>
+        <p>Member since {{ user.date_joined|date:'M Y' }}</p>
       </div>
-      <div>
-        <dt>Member since</dt>
-        <dd>{{ user.date_joined|date:'M Y' }}</dd>
-      </div>
-      <div>
-        <dt>Home</dt>
-        <dd>Dashboard</dd>
-      </div>
-      <div>
-        <dt>Account</dt>
-        <dd><span class="status-dot"></span>Active</dd>
-      </div>
-    </dl>
-    <div class="account-note">
-      <span>{% include 'includes/icon.html' with icon_name='sparkles' only %}</span>
-      <p>
-        Good things start<br>
-        with a little space.
-      </p>
-    </div>
-  </aside>
-  <footer class="dashboard-footer">
-    <span>TanaSpace</span>
-    <span>Less scattered. More together.</span>
-  </footer>
+      <a class="text-action" href="{% url 'accounts:profile' %}">Profile</a>
+    </aside>
+  </div>
 </main>

@@ -2,10 +2,12 @@ from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django import forms
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
@@ -13,6 +15,7 @@ from common.workspace import is_partial, mutation, return_url, workspace_render,
 from item_types.models import ItemTypes
 from .forms import ItemForm, ItemSearchForm
 from .models import Item
+from item_types.properties import detail_properties
 
 LIST_LIMIT = 40
 
@@ -45,6 +48,7 @@ def page(request, *, form=None, selected_item=None, modal_mode=None, favorites_o
         "items": page_obj.object_list, "page_obj": page_obj, "search_form": search,
         "item_count": count, "result_count": page_obj.paginator.count,
         "at_item_limit": count >= settings.MAX_ITEMS_PER_USER, "favorites_only": favorites_only,
+        "property_rows": detail_properties(selected_item) if selected_item else ([], []),
         "form": form, "selected_item": selected_item, "modal_mode": modal_mode,
         "needs_type": modal_mode == "create" and not ItemTypes.objects.filter(owner=request.user).exists(),
         "return_to": back, "return_query": urlencode({"return_to": back}),
@@ -77,16 +81,18 @@ def saved_response(request, item):
 
 @workspace_view
 @require_http_methods(["GET", "POST"])
+@transaction.atomic
 def create(request):
-    form = ItemForm(request.POST if request.method == "POST" else None, owner=request.user)
-    if request.method == "POST" and ItemTypes.objects.filter(owner=request.user).exists() and form.is_valid():
-        with transaction.atomic():
-            get_user_model().objects.select_for_update().get(pk=request.user.pk)
-            if Item.objects.filter(owner=request.user).count() < settings.MAX_ITEMS_PER_USER:
-                item = form.save(commit=False)
-                item.owner = request.user
-                item.save()
-                return saved_response(request, item)
+    if request.method == "POST":
+        get_user_model().objects.select_for_update().get(pk=request.user.pk)
+    loading = request.method == "POST" and request.POST.get("_action") == "load_properties"
+    form = ItemForm(request.POST if request.method == "POST" else None, owner=request.user, loading=loading)
+    if request.method == "POST" and not loading and ItemTypes.objects.filter(owner=request.user).exists() and form.is_valid():
+        if Item.objects.filter(owner=request.user).count() < settings.MAX_ITEMS_PER_USER:
+            item = form.save(commit=False)
+            item.owner = request.user
+            item.save()
+            return saved_response(request, item)
         form.add_error(None, "You can save up to 100 items. Delete one before adding another.")
     return page(request, form=form, modal_mode="create")
 
@@ -100,10 +106,14 @@ def detail(request, pk):
 
 @workspace_view
 @require_http_methods(["GET", "POST"])
+@transaction.atomic
 def edit(request, pk):
+    if request.method == "POST":
+        get_user_model().objects.select_for_update().get(pk=request.user.pk)
     item = get_object_or_404(Item, pk=pk, owner=request.user)
-    form = ItemForm(request.POST if request.method == "POST" else None, instance=item, owner=request.user)
-    if request.method == "POST" and form.is_valid():
+    loading = request.method == "POST" and request.POST.get("_action") == "load_properties"
+    form = ItemForm(request.POST if request.method == "POST" else None, instance=item, owner=request.user, loading=loading)
+    if request.method == "POST" and not loading and form.is_valid():
         item = form.save(commit=False)
         item.mark_edited(request.user)
         item.save()
@@ -112,8 +122,30 @@ def edit(request, pk):
 
 
 @workspace_view
+@require_http_methods(["POST"])
+def custom_fields(request):
+    item = None
+    if request.POST.get("_item_id"):
+        try:
+            item_id = forms.IntegerField(min_value=1).clean(request.POST["_item_id"])
+        except ValidationError:
+            return HttpResponseBadRequest("Choose a valid item.")
+        item = get_object_or_404(Item, pk=item_id, owner=request.user)
+    form = ItemForm(request.POST, instance=item, owner=request.user, loading=True)
+    if request.POST.get("item_type") and not form.selected_type:
+        return HttpResponseBadRequest("Choose a type owned by this user.")
+    response = render(request, "items/custom_fields.html", {"form": form})
+    from django.utils.cache import add_never_cache_headers
+    add_never_cache_headers(response)
+    return response
+
+
+@workspace_view
 @require_http_methods(["GET", "POST"])
+@transaction.atomic
 def delete(request, pk):
+    if request.method == "POST":
+        get_user_model().objects.select_for_update().get(pk=request.user.pk)
     item = get_object_or_404(Item, pk=pk, owner=request.user)
     if request.method == "POST":
         item.delete()
@@ -125,7 +157,10 @@ def delete(request, pk):
 
 @workspace_view
 @require_http_methods(["POST"])
+@transaction.atomic
 def favorite(request, pk):
+    if request.method == "POST":
+        get_user_model().objects.select_for_update().get(pk=request.user.pk)
     item = get_object_or_404(Item, pk=pk, owner=request.user)
     desired = request.POST.get("favorite")
     if desired not in {"true", "false"}:
