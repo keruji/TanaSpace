@@ -3,7 +3,7 @@ from django.forms.utils import ErrorDict
 
 from .models import Item
 from item_types.properties import property_field, serialize_value, has_value
-from item_types.models import ItemTypes
+from item_types.models import ItemTypes, ItemTypeProperty
 
 
 class ItemForm(forms.ModelForm):
@@ -105,6 +105,42 @@ class ItemSearchForm(forms.Form):
     def __init__(self, *args, owner, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["type"].queryset = ItemTypes.objects.filter(owner=owner)
+        self.fields["property"] = forms.ModelChoiceField(
+            queryset=ItemTypeProperty.objects.filter(item_type__owner=owner, archived_at__isnull=True)
+            .select_related("item_type").order_by("item_type__name", "sequence", "name"),
+            required=False, label="Custom property", empty_label="All properties")
+        self.fields["property"].label_from_instance = lambda prop: f"{prop.item_type.name} — {prop.name}"
+        self.fields["property_value"] = forms.CharField(max_length=1000, required=False, label="Property value")
+
+    def clean(self):
+        data = super().clean()
+        prop, value, item_type = data.get("property"), data.get("property_value"), data.get("type")
+        if prop and item_type and prop.item_type_id != item_type.pk:
+            self.add_error("property", "Choose a property belonging to the selected type.")
+        if prop and not value:
+            self.add_error("property_value", "Enter a value to filter by.")
+        elif value and not prop:
+            self.add_error("property", "Choose a property to filter by.")
+        elif prop and value:
+            try:
+                if prop.data_type == "boolean":
+                    values = {"yes": True, "true": True, "no": False, "false": False}
+                    if value.casefold() not in values:
+                        raise forms.ValidationError("Enter Yes or No.")
+                    data["filter_value"] = values[value.casefold()]
+                elif prop.data_type == "dropdown":
+                    matches = [option["id"] for option in prop.configuration.get("options", [])
+                               if option["label"].casefold() == value.casefold()]
+                    if not matches:
+                        raise forms.ValidationError("Enter an option label for this property.")
+                    data["filter_value"] = matches
+                else:
+                    field = property_field(prop)
+                    field.required = True
+                    data["filter_value"] = serialize_value(field.clean(value))
+            except forms.ValidationError as error:
+                self.add_error("property_value", error)
+        return data
 
 
 def initial_value(prop, value):

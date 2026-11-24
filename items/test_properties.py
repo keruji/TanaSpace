@@ -132,6 +132,30 @@ class ItemPropertyTests(TestCase):
         self.assertNotContains(response, "<script>bad()")
         self.assertNotContains(response, "<img src=x")
 
+    def test_custom_property_filters(self):
+        values = {str(self.text.pk): "ACME Tools", str(self.number.pk): 65.125,
+                  str(self.date.pk): "2026-01-02", str(self.boolean.pk): False,
+                  str(self.choice.pk): "stable-option"}
+        item = Item.objects.create(owner=self.user, item_type=self.kind, name="Camera",
+                                   description="Travel photography", property_values=values, is_favorite=True)
+        for prop, value in [(self.text, "acme"), (self.number, "65.125"),
+                            (self.date, "2026-01-02"), (self.boolean, "No"), (self.choice, "each")]:
+            for route in ("items:index", "items:favorites"):
+                with self.subTest(prop=prop.name, route=route):
+                    response = self.client.get(reverse(route), {"q": "PHOTO", "property": str(prop.pk), "property_value": value})
+                    self.assertEqual([row.pk for row in response.context["items"]], [item.pk])
+
+    def test_property_filter_rejects_invalid_and_private_inputs(self):
+        private_type = ItemTypes.objects.create(owner=self.other, name="Private")
+        private = ItemTypeProperty.objects.create(item_type=private_type, name="Secret", data_type="text")
+        for params in [{"property": str(private.pk), "property_value": "secret"},
+                       {"property": str(self.boolean.pk), "property_value": "maybe"},
+                       {"property": str(self.text.pk)}, {"property_value": "ACME"}]:
+            with self.subTest(params=params):
+                response = self.client.get(reverse("items:index"), params)
+                self.assertTrue(response.context["search_form"].errors)
+                self.assertEqual(len(response.context["items"]), 0)
+
 
 class AdditiveSchemaCompatibilityTests(TestCase):
     def test_historical_models_can_insert_against_expanded_schema(self):

@@ -21,7 +21,7 @@
 
 .item-search {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
   align-items: start;
   gap: .85rem;
   margin-bottom: 1rem;
@@ -31,7 +31,8 @@
   background: var(--surface);
 }
 .item-search > div { min-width: 0; }
-.item-search .secondary-button { margin-top: 1.7rem; }
+.item-search .secondary-button { grid-column: 3; grid-row: 2; margin-top: 1.7rem; }
+.item-search .search-help { margin-top: .35rem; color: var(--muted); font-size: .75rem; line-height: 1.4; }
 .item-search .errorlist { margin-top: .35rem; color: var(--danger-text); font-size: .85rem; }
 .search-field { position: relative; }
 .search-field .ui-icon {
@@ -111,8 +112,9 @@
 
 @media (max-width: 640px) {
   .items-page-heading { gap: .85rem; }
-  .item-search { grid-template-columns: minmax(0, 1fr) auto; gap: .75rem; }
+  .item-search { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
   .item-search > :first-child { grid-column: 1 / -1; }
+  .item-search .secondary-button { grid-column: 1 / -1; grid-row: auto; justify-self: start; margin-top: 0; }
   .item-row { grid-template-columns: auto minmax(0, 1fr) auto; }
   .item-row time { grid-column: 2; grid-row: 2; margin-top: -.25rem; }
   .row-chevron { grid-column: 3; grid-row: 1; }

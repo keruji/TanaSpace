@@ -30,6 +30,33 @@ async function property(page, name, kind = 'Text', configure) {
   await expect(page.locator('#modal-host h2')).toContainText('Edit ');
 }
 
+test('filter items by description and property, then delete the property', async ({ page }) => {
+  await start(page);
+  const typeID = await newType(page, 'Devices');
+  await property(page, 'Brand');
+  await page.goto('/tana/items/');
+  await page.getByRole('link', { name: 'Add item', exact: true }).click();
+  await page.getByLabel('Name', { exact: true }).fill('Camera');
+  await page.getByLabel('Description', { exact: true }).fill('Travel photography');
+  await select(page, 'Item type', 'Devices');
+  await page.getByLabel('Brand', { exact: true }).fill('ACME');
+  await page.getByRole('button', { name: 'Save item', exact: true }).click();
+  await page.getByRole('link', { name: 'Close window' }).click();
+  await page.locator('.item-search input[name=q]').fill('photography');
+  await select(page, 'Custom property', 'Devices — Brand');
+  await page.getByLabel('Property value').fill('acme');
+  await page.locator('.item-search button[type=submit]').click();
+  await expect(page.getByRole('link', { name: 'View Camera' })).toBeVisible();
+  await page.getByRole('link', { name: 'View Camera' }).click();
+  await page.getByRole('link', { name: 'Close window' }).click();
+  await expect(page.getByLabel('Property value')).toHaveValue('acme');
+  await page.goto(`/tana/item_types/${typeID}/edit/`);
+  await page.getByRole('link', { name: 'Delete Brand', exact: true }).click();
+  await expect(page.locator('#modal-host')).toContainText('permanently deletes');
+  await page.getByRole('button', { name: 'Delete property', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Delete Brand', exact: true })).toHaveCount(0);
+});
+
 test('property editor, dynamic item fields, renamed labels, and archived values work together', async ({ page }) => {
   await start(page);
   const typeID = await newType(page, 'Devices');

@@ -359,7 +359,7 @@ test('closing and saving windows never exposes the native select behind the cust
     await expect(page.locator('#main')).not.toHaveClass(/htmx-settling/);
     const native = page.locator('.item-search select[name=type]');
     expect(await native.evaluate(el => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
-    await expect(page.locator('.item-search .select-trigger')).toHaveCount(1);
+    await expect(page.locator('.item-search .select-control').filter({ has: page.locator('select[name=type]') }).locator('.select-trigger')).toHaveCount(1);
   }
   for (let repeat = 0; repeat < 3; repeat++) {
     await page.locator('#main').evaluate(el => el.dataset.beforeWindow = 'original');

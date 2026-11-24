@@ -8,9 +8,10 @@
         <form method="post" action="{% url 'item_types:property_reorder' selected_type.pk prop.pk %}" data-async-form>{% csrf_token %}<input type="hidden" name="schema_version" value="{{ selected_type.property_schema_version }}"><input type="hidden" name="return_to" value="{{ return_to }}"><button class="text-action" type="submit" name="direction" value="up" aria-label="Move {{ prop.name }} up" {% if forloop.first %}disabled{% endif %}>↑</button><button class="text-action" type="submit" name="direction" value="down" aria-label="Move {{ prop.name }} down" {% if forloop.last %}disabled{% endif %}>↓</button></form>
         <a class="text-action" href="{% url 'item_types:property_edit' selected_type.pk prop.pk %}?{{ return_query }}" data-window>{% include 'includes/icon.html' with icon_name='pencil' only %} Edit <span class="sr-only">{{ prop.name }}</span></a>
         <a class="text-action" href="{% url 'item_types:property_archive' selected_type.pk prop.pk %}?{{ return_query }}" data-window>{% include 'includes/icon.html' with icon_name='trash-2' only %} Archive <span class="sr-only">{{ prop.name }}</span></a>
+        <a class="text-action" href="{% url 'item_types:property_delete' selected_type.pk prop.pk %}?{{ return_query }}" data-window>{% include 'includes/icon.html' with icon_name='trash-2' only %} Delete <span class="sr-only">{{ prop.name }}</span></a>
       </div>
     </li>
   {% empty %}<li class="section-caption">No custom properties yet.</li>{% endfor %}
   </ul>
-  {% if archived_properties %}<details class="archived-properties"><summary>Archived Properties</summary><ul class="property-list">{% for prop in archived_properties %}<li>{{ prop.name }} · {{ prop.get_data_type_display }} <span class="section-caption">Saved values are retained.</span></li>{% endfor %}</ul></details>{% endif %}
+  {% if archived_properties %}<details class="archived-properties"><summary>Archived Properties</summary><ul class="property-list">{% for prop in archived_properties %}<li><div>{{ prop.name }} · {{ prop.get_data_type_display }} <span class="section-caption">Saved values are retained.</span></div><a class="text-action" href="{% url 'item_types:property_delete' selected_type.pk prop.pk %}?{{ return_query }}" data-window>Delete <span class="sr-only">{{ prop.name }}</span></a></li>{% endfor %}</ul></details>{% endif %}
 </section>

@@ -69,6 +69,22 @@ class PropertyTests(TestCase):
         self.assertEqual(self.client.post(url, {"schema_version": 0, "direction": "down"}).status_code, 400)
         self.assertContains(self.edit(second, schema_version=0), "changed in another window")
 
+    def test_delete_property_removes_values_only_after_confirmation(self):
+        self.create()
+        prop = self.kind.properties.get()
+        item = Item.objects.create(owner=self.user, item_type=self.kind, name="Laptop", property_values={str(prop.pk): "ACME", "other": "keep"})
+        url = reverse("item_types:property_delete", args=[self.kind.pk, prop.pk])
+        self.assertContains(self.client.get(url), "permanently deletes")
+        self.assertContains(self.client.post(url, self.data()), "Confirm that")
+        self.assertContains(self.client.post(url, {"schema_version": 0, "confirm_delete": "yes"}), "Properties changed")
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.post(url, self.data(confirm_delete="yes")).status_code, 404)
+        self.client.force_login(self.user)
+        self.assertEqual(self.client.post(url, self.data(confirm_delete="yes")).status_code, 302)
+        item.refresh_from_db()
+        self.assertEqual(item.property_values, {"other": "keep"})
+        self.assertFalse(self.kind.properties.filter(pk=prop.pk).exists())
+
     def test_type_changes_block_zero_and_false_but_allow_unused(self):
         self.create(data_type="boolean")
         prop = self.kind.properties.get()

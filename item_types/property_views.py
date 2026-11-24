@@ -23,13 +23,13 @@ def editor_response(request, item_type):
     return mutation(page(request, selected_type=item_type, form=ItemTypeForm(instance=item_type), modal_mode="edit"), "types", url=url)
 
 
-def property_page(request, item_type, *, prop=None, form=None, options=None, archive=False, error=None):
+def property_page(request, item_type, *, prop=None, form=None, options=None, archive=False, delete=False, error=None):
     from urllib.parse import urlencode
     back = return_url(request, reverse("item_types:index"))
     return workspace_render(request, "item_types/content.html", {
         "active_nav": "settings", "page_url": reverse("item_types:index"),
         "selected_type": item_type, "property": prop, "form": form, "options": options,
-        "archive_property": archive, "property_error": error,
+        "archive_property": archive, "delete_property": delete, "property_error": error,
         "item_types": ItemTypes.objects.filter(owner=request.user),
         "return_to": back, "return_query": urlencode({"return_to": back}),
     }, title="Custom property · TanaSpace", window_template="item_types/property_window.html")
@@ -122,6 +122,38 @@ def archive_property(request, pk, property_id):
             item_type.save(update_fields=["property_schema_version"])
             return editor_response(request, item_type)
     return property_page(request, item_type, prop=prop, archive=True, error=error)
+
+
+@workspace_view
+@require_http_methods(["GET", "POST"])
+@transaction.atomic
+def delete_property(request, pk, property_id):
+    if request.method == "POST":
+        get_user_model().objects.select_for_update().get(pk=request.user.pk)
+    item_type = get_object_or_404(ItemTypes, pk=pk, owner=request.user)
+    prop = get_object_or_404(item_type.properties, pk=property_id)
+    error = None
+    if request.method == "POST":
+        if not schema_matches(request, item_type):
+            error = "Properties changed. Review the confirmation and try again."
+        elif request.POST.get("confirm_delete") != "yes":
+            error = "Confirm that this property should be deleted."
+        else:
+            key = str(prop.pk)
+            items = list(item_type.items.filter(owner=request.user).only("id", "property_values"))
+            changed = []
+            for item in items:
+                if key in item.property_values:
+                    del item.property_values[key]
+                    changed.append(item)
+            if changed:
+                from items.models import Item
+                Item.objects.bulk_update(changed, ["property_values"])
+            prop.delete()
+            item_type.property_schema_version += 1
+            item_type.save(update_fields=["property_schema_version"])
+            return editor_response(request, item_type)
+    return property_page(request, item_type, prop=prop, delete=True, error=error)
 
 
 @workspace_view

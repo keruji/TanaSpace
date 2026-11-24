@@ -91,7 +91,7 @@ class WorkspaceItemTests(TestCase):
 
     def test_pagination_filter_state_and_bounded_queries(self):
         Item.objects.bulk_create([Item(owner=self.user, item_type=self.kind, name=f"Hammer {i}") for i in range(44)])
-        with self.assertNumQueries(6):  # session, user, count, rows, quota count, filter choices; no N+1
+        with self.assertNumQueries(7):  # Includes both filter choice lists; no N+1.
             response = self.client.get(reverse("items:index"), {"q": "Hammer", "page": 2}, headers={"HX-Request": "true", "HX-Target": "main"})
         self.assertEqual(len(response.context["items"]), 5)
         self.assertContains(response, "q=Hammer")

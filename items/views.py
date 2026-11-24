@@ -6,6 +6,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models import Q
+from django.db.models.fields.json import KeyTextTransform
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -28,9 +30,19 @@ def page(request, *, form=None, selected_item=None, modal_mode=None, favorites_o
         items = items.filter(is_favorite=True)
     if search.is_valid():
         if search.cleaned_data["q"]:
-            items = items.filter(name__icontains=search.cleaned_data["q"])
+            items = items.filter(Q(name__icontains=search.cleaned_data["q"]) | Q(description__icontains=search.cleaned_data["q"]))
         if search.cleaned_data["type"]:
             items = items.filter(item_type=search.cleaned_data["type"])
+        prop = search.cleaned_data["property"]
+        if prop:
+            items = items.filter(item_type_id=prop.item_type_id)
+            if prop.data_type == "text":
+                items = items.annotate(filter_property_text=KeyTextTransform(str(prop.pk), "property_values"))
+                items = items.filter(filter_property_text__icontains=search.cleaned_data["filter_value"])
+            elif prop.data_type == "dropdown":
+                items = items.filter(**{f"property_values__{prop.pk}__in": search.cleaned_data["filter_value"]})
+            else:
+                items = items.filter(**{f"property_values__{prop.pk}": search.cleaned_data["filter_value"]})
     else:
         items = items.none()
     page_obj = Paginator(items, LIST_LIMIT).get_page(request.GET.get("page"))
