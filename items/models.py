@@ -12,6 +12,8 @@ class Item(OwnershipModel):
     )
     description = models.CharField(max_length=500, blank=True)
     notes = models.CharField(max_length=2000, blank=True)
+    is_favorite = models.BooleanField(default=False, db_default=False)
+    property_values = models.JSONField(default=dict, db_default={}, editable=False)
 
     def clean(self):
         super().clean()

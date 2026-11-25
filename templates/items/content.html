@@ -1,0 +1,81 @@
+<main data-page-title="{{ list_title }} · TanaSpace" id="main" tabindex="-1" data-active-nav="{{ active_nav }}" data-page-url="{{ page_url }}" class="items-page">
+  <div class="items-page-heading">
+    <div>
+      <h1>{{ list_title }}</h1>
+      <p>{% if favorites_only %}Quick access to the items you’ve starred.{% else %}Browse and search your personal inventory.{% endif %}</p>
+    </div>
+    <div class="page-actions">
+      <a class="primary-button action-with-icon" href="{% url 'items:create' %}?return_to={{ page_url|urlencode }}" data-window>{% include 'includes/icon.html' with icon_name='plus' only %}<span>Add item</span></a>
+    </div>
+  </div>
+  <form class="item-search" method="get" action="{% if favorites_only %}{% url 'items:favorites' %}{% else %}{% url 'items:index' %}{% endif %}" data-workspace-search data-search-builder data-field="{{ request.GET.field|default:'name' }}">
+    <input type="hidden" name="search_mode" value="builder">
+    {% if search_form.q.value %}<input type="hidden" name="q" value="{{ search_form.q.value }}">{% endif %}
+    {% if search_form.type.value %}<input type="hidden" name="type" value="{{ search_form.type.value }}">{% endif %}
+    {% if search_form.property.value %}<input type="hidden" name="property" value="{{ search_form.property.value }}">{% endif %}
+    {% if search_form.property_value.value %}<input type="hidden" name="property_value" value="{{ search_form.property_value.value }}">{% endif %}
+    <div class="search-builder-controls">
+      <div><label for="search-field">Search by</label><select id="search-field" name="field" data-search-field><option value="name">Name</option><option value="description">Description</option><option value="created">Date created</option><option value="types">Tana Type</option>{% for prop in search_builder.shared %}<option value="prop_{{ prop.id }}">{{ prop.name }}</option>{% endfor %}</select></div>
+      <div data-search-input><label for="search-value">Search value</label><input id="search-value" name="value" maxlength="1000" data-search-value{% if search_builder.errors %} value="{{ request.GET.value }}"{% endif %}></div>
+      <div data-search-choice-wrap hidden><label for="search-choice">Search value</label><select id="search-choice" data-search-choice></select></div>
+      <div data-search-types hidden><label for="search-type-value">Tana Type</label><select id="search-type-value" data-search-type><option value="" disabled hidden selected>Choose a type</option>{% for kind in search_builder.types %}<option value="{{ kind.id }}">{{ kind.name }}</option>{% endfor %}</select></div>
+      <div data-search-dates><label for="search-from">Created from</label><input type="date" id="search-from" name="created_from" value="{{ request.GET.created_from }}" data-search-from></div>
+      <div data-search-dates><label for="search-to">Created to</label><input type="date" id="search-to" name="created_to" value="{{ request.GET.created_to }}" data-search-to></div>
+      <button class="secondary-button" type="submit">Search</button>
+    </div>
+    {% if search_builder.errors %}<div class="form-errors" role="alert">{% for error in search_builder.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+    <div class="search-chips" data-search-chips>{% for chip in search_builder.chips %}<span class="search-chip">{% if chip.key != 'created_from' and chip.key != 'created_to' %}<input type="hidden" name="{{ chip.key }}" value="{{ chip.value }}">{% endif %}<span>{{ chip.label }}</span><button type="button" data-remove-search="{{ chip.key }}" aria-label="Remove {{ chip.label }}">×</button></span>{% endfor %}{% if search_builder.chips or search_form.q.value or search_form.type.value or search_form.property.value %}<a class="text-action" href="{% if favorites_only %}{% url 'items:favorites' %}{% else %}{% url 'items:index' %}{% endif %}">Clear searches</a>{% endif %}</div>
+    {% if search_builder.selected_types %}<details class="search-properties"><summary>Tana Type properties</summary>{% if search_builder.shared %}<div class="search-property-options">{% for prop in search_builder.shared %}<button type="button" data-property-choice="prop_{{ prop.id }}">{{ prop.name }}</button>{% endfor %}</div>{% else %}<p class="section-caption">No shared properties for the selected types.</p>{% endif %}</details>{% endif %}
+    <noscript><p class="section-caption">To search by Tana Type, enter its number as the search value.{% for kind in search_builder.types %} {{ kind.id }}: {{ kind.name }}.{% endfor %}</p></noscript>
+    <div hidden data-search-data>{% for kind in search_builder.types %}<div data-type-id="{{ kind.id }}" data-name="{{ kind.name }}">{% for prop in kind.properties %}<div data-property-id="{{ prop.id }}" data-name="{{ prop.name }}" data-kind="{{ prop.kind }}">{% for option in prop.options %}<span data-option-id="{{ option.id }}" data-label="{{ option.label }}"></span>{% endfor %}</div>{% endfor %}</div>{% endfor %}</div>
+  </form>
+  <section class="panel item-list-panel" aria-labelledby="saved-items-title">
+    <div class="panel-heading">
+      <h2 id="saved-items-title">{% if favorites_only %}Favorite items{% else %}Saved items{% endif %}</h2>
+      <span class="list-result-count">{% if favorites_only or result_count == item_count %}{{ result_count }} result{{ result_count|pluralize }}{% else %}{{ result_count }} of {{ item_count }} item{{ item_count|pluralize }}{% endif %}</span>
+    </div>
+    {% if items %}
+    <ul class="item-list">
+      {% for item in items %}
+      <li>
+        <a class="item-row" href="{% url 'items:detail' item.pk %}?return_to={{ page_url|urlencode }}" data-window aria-label="View {{ item.name }}">
+          <span class="item-symbol">{% include 'includes/type_icon.html' with icon=item.item_type.icon only %}</span>
+          <div class="item-details">
+            <h3>{{ item.name }}</h3>
+            <p class="item-meta">{{ item.item_type.name }}{% if item.is_favorite %} {% include 'includes/icon.html' with icon_name='star' icon_class='row-favorite' only %}<span class="sr-only"> Favorite</span>{% endif %}</p>
+            {% if item.description %}<p>{{ item.description|truncatechars:100 }}</p>{% endif %}
+          </div>
+          <time datetime="{{ item.created_at|date:'c' }}">{{ item.created_at|date:'M j, Y' }}</time>
+          {% include 'includes/icon.html' with icon_name='chevron-down' icon_class='row-chevron' only %}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-items">
+      <span class="empty-icon">{% if favorites_only %}{% include 'includes/icon.html' with icon_name='star' only %}{% else %}{% include 'includes/icon.html' with icon_name='package' only %}{% endif %}</span>
+      {% if search_builder.chips or search_builder.errors or search_form.q.value or search_form.type.value or search_form.property.value or search_form.property_value.value %}
+      <h3>No matching items.</h3>
+      <p>Try a different search or clear the filters.</p>
+      <a class="text-action" href="{% if favorites_only %}{% url 'items:favorites' %}{% else %}{% url 'items:index' %}{% endif %}">Clear filters</a>
+      {% elif favorites_only %}
+      <h3>No favorites yet.</h3>
+      <p>Open an item and choose Add to favorites.</p>
+      <a class="text-action" href="{% url 'items:index' %}">Browse My Tana</a>
+      {% else %}
+      <h3>No items saved yet.</h3>
+      <p>Choose Add item to start your collection. Use Tana Types to organize your items.</p>
+      <a class="text-action" href="{% url 'item_types:index' %}">Manage types</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </section>
+  {% if item_count > 40 %}<p class="section-caption pagination-note">Showing 40 items per page, newest first.</p>{% endif %}
+  {% if page_obj.has_other_pages %}
+  <nav class="list-pagination" aria-label="Item pages">
+    {% if page_obj.has_previous %}<a href="?{{ pagination_query }}&amp;page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?{{ pagination_query }}&amp;page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+  </nav>
+  {% endif %}
+</main>

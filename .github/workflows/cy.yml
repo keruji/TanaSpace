@@ -110,6 +110,12 @@ jobs:
           echo "exit_code=$status" >> "$GITHUB_OUTPUT"
           exit "$status"
 
+      - name: Install browser test runtime
+        run: npx playwright install --with-deps chromium
+
+      - name: Test workspace interactions
+        run: npm run test:browser
+
   publish:
     name: Publish application image
     needs: checks

@@ -40,27 +40,28 @@ queries to the signed-in user; creating a model does not add those rules.
 | --- | --- |
 | `config/settings.py` | Installed apps, database, authentication, templates, static files, and environment settings. |
 | `config/urls.py` | Top-level routes: `/`, `/accounts/`, `/tana`, `/tana/items/`, `/tana/item_types/`, and `/admin/`. |
-| `accounts/` | Custom `User` model, session-scoped demo entry and logout, temporarily disabled public login/signup routes, admin registration, tests. |
+| `accounts/` | Custom `User`, Profile editing, Settings overview, demo entry/logout, and unchanged disabled public login/signup routes. |
 | `common/models.py` | Abstract `OwnershipModel` with shared name, owner, creation time, and edit history fields for future user-owned models. |
 | `dashboard/` | The `/tana` page. Its view fetches the signed-in user's three latest items. |
-| `items/` | Required type relation, item forms, list, floating create/view/edit/delete pages, routes, admin, migrations, and tests. |
+| `items/` | Owner-scoped items, search/type filters, Favorites, HTML window fragments, quota enforcement, and tests. |
 | `item_types/` | Type model, form, ordered list, floating create/view/edit/delete pages, routes, migrations, and tests. |
 | `templates/base.html` | Shared HTML shell for app and account pages. |
-| `templates/app/base.html` | App header, sidebar, logout form, and `app_main` block. |
+| `templates/app/base.html` | Persistent header, collapsible sidebar, account menu with POST logout, and workspace content mount. |
 | `templates/dashboard/`, `templates/items/`, `templates/registration/` | Page HTML. |
 | `templates/includes/` | Reused logo and form-field markup. |
 | `templates/landing.html` | Public landing page at `/`. |
-| `src/css/global.css` | Shared page shell, form, and modal styles. |
-| `src/css/auth.css`, `dashboard.css`, `items.css`, `item_types.css` | Styles owned by their page or module; Vite compiles them together. |
+| `src/css/global.css` | Shared typography, buttons, and form controls. |
+| `src/css/workspace.css` | Workspace shell, record windows, and custom selection controls. |
+| `src/css/auth.css`, `dashboard.css`, `items.css`, `landing.css` | Styles owned by their page or module; Vite compiles them together. |
 | `static/images/` | Logo and the local Lucide icon sprite; add future static images here. |
-| `src/style.css`, `src/main.js` | Shared Tailwind entry plus landing styles and JavaScript. Vite builds these into `dist/app.css` and `dist/app.js`. |
+| `src/style.css`, `src/main.js` | Shared frontend stylesheet and JavaScript entry points. Vite builds these into `dist/app.css` and `dist/app.js`. |
 | `docker-compose.yml`, `Dockerfile` | Local containers and image build. |
 | `tests.py` in each app | Checks for that app's behavior. |
 
 All templates can use Tailwind utilities. The frontend watcher compiles
 `src/style.css` into `dist/app.css`; `@source "../templates"` scans the Django
 templates. `templates/base.html` and the landing page load that output.
-Landing-specific rules stay in `src/style.css`; shared rules stay in
+Landing-specific rules live in `src/css/landing.css`. Shared rules live in
 `src/css/global.css`, and each module has its own source stylesheet. All of
 these files run through Vite, so they can use Tailwind directives such as
 `@apply`. The browser receives one compiled `dist/app.css` file.
@@ -93,11 +94,12 @@ Copy `.env.example` to `.env` and set a long random `POSTGRES_PASSWORD`, then ru
 docker compose up --build -d
 ```
 
-Open <http://localhost:5173> and click **Demo**. This creates a temporary demo
+Open <http://localhost:5173> and click **Demo**. By default, this creates a temporary demo
 user named `demo` plus nine digits and opens `/tana`. Its session expires after
 one hour. Logging out removes the demo user and its data immediately; a small
 cleanup loop deletes expired demo accounts every five minutes. At most 25 demo
-accounts can be active at once by default. Public login and signup
+accounts can be active at once by default. To keep local test data across logout,
+opt into **Persistent development demos** below. Public login and signup
 are temporarily disabled. The port is 5173 because Compose maps it to Django's
 port 8000 inside the container.
 
@@ -219,3 +221,174 @@ configured for all templates in `src/style.css`. The shared
 For a first independent exercise, add one optional field to `Item` using the
 steps above. It will take you through the database, form, server view,
 template, CSS, and test without introducing another app.
+
+
+## Dynamic workspace
+
+The header and sidebar remain mounted during authenticated navigation. HTMX
+2.0.11 is pinned in npm and bundled locally by Vite; no CDN or separate API is
+needed. `common/workspace.py` renders the same Django context as a full document,
+a workspace fragment, main-content-only fragment, or window fragment depending
+on `HX-Request` and `HX-Target`. Authentication and ownership checks run for every
+request. History-restore requests without `HX-Request` receive a full document.
+
+- `src/workspace.js` owns HTMX requests, URL history, titles, independent content
+  scroll restoration, dirty-form confirmation, asynchronous forms, and windows.
+- `src/workspace-shell.js` owns the persistent sidebar, mobile drawer, and account
+  menu. Desktop navigation preference is stored under `tanaspace-sidebar`;
+  mobile drawer state is temporary. Theme storage remains independent.
+- `templates/app/workspace_page.html` wraps the shared content templates for
+  direct visits. `content.html` and `window.html` in each record app contain the
+  reusable HTML. Normal links and CSRF-protected POST forms remain usable when
+  JavaScript is disabled.
+- The history controller stores only URLs, entry indexes, and scroll positions
+  in browser history. It uses the History API around HTMX so dirty forms can
+  reject Back/Forward before replacement; it does not cache private page HTML
+  in browser storage. Window Close returns to the previous in-app window or page. Successful
+  deletion returns directly to the originating collection so it cannot reopen
+  a deleted record. Direct window visits close through a safe collection URL.
+- Mutation responses return `X-Workspace-Changed`, optionally
+  `X-Workspace-URL` or `X-Workspace-Close`. These tell the controller to update
+  the detail URL, refresh the underlying region, or close a deleted record.
+  Validation returns the bound form with HTTP 200 and no mutation header.
+- Return URLs are allowlisted to non-modal workspace routes. Failure responses
+  never replace a form with a server error document. Writes are not retried
+  automatically; if a connection fails, check records before submitting again.
+
+Profile lives at `/tana/profile/`, Settings at `/tana/settings/`, and Favorites at
+`/tana/favorites/`. Tana Types keeps every existing `/tana/item_types/` URL but is
+accessed from Settings. Profile edits nickname and existing first/last name
+fields; username is read-only. Display names prefer nickname, then available
+name components, then username.
+
+Search uses `q`, `type`, and `page` query parameters on My Tana and Favorites.
+Results are owner-scoped, paginated at 40, and keep their filters when a window
+closes. Item and type limits remain 100 and 20. Favorites use an explicit-state
+POST rather than a blind toggle and do not change content edit metadata.
+
+The nickname and favorite fields have additive migrations with database defaults
+for previous-release insert compatibility. Local development runs migrations
+through its normal startup script. Production needs the separate schema step
+in [DEPLOYMENT.md](DEPLOYMENT.md); the deployment preflight remains in place.
+
+## Browser regression tests
+
+Install the browser runtime once after `npm ci`:
+
+```bash
+npx playwright install --with-deps chromium
+npm run build
+npm run test:browser
+```
+
+Run these commands in an environment with the Python requirements installed.
+Playwright starts `tests/browser_server.py` twice, using separate temporary SQLite
+databases on ports 5174 (public demo) and 5175 (development demo). It never migrates or
+changes your development database. Django's existing CI suite continues to run
+against PostgreSQL, including the concurrent quota test. Browser coverage runs
+in the same required CI check before image publication.
+
+For already running **disposable test servers**, set `BROWSER_BASE_URL` and
+`BROWSER_DEV_BASE_URL` to their respective URLs. Browser tests create temporary demo accounts and delete their own sessions
+on completion. Do not point them at production or a shared dataset.
+
+
+### Selection controls and action icons
+
+`src/select.js` progressively enhances single selects using vanilla JavaScript
+and the browser's Popover API. Django's native select remains the submitted
+value and validation source, and stays visible when JavaScript or popovers are
+unavailable. Enhanced controls support Arrow/Home/End keys, type-ahead,
+Enter/Space selection, and Escape without closing the surrounding window.
+Menus use the shared light/dark tokens and stay within the viewport.
+
+Record action icons use the existing local Lucide sprite. The shared window
+close control is icon-only and keeps its accessible name. The avatar menu only
+moves focus into its options for keyboard opening; pointer opening keeps focus
+on the avatar, and closed options are inert.
+
+Workspace content is temporarily inert during navigation and submission. The
+route state is committed before new content becomes interactive, preventing
+rapid clicks from opening records against a stale page or window origin.
+
+
+Window Back/Cancel links use `data-window-back`, not `data-window`. They reverse
+an existing transition instead of pushing another detail window into history.
+When a delete URL was opened directly, its Back/Cancel link replaces that entry
+with the detail URL; Close can then safely return to the collection.
+
+
+## Custom Tana Type properties
+
+Settings → Manage Tana Types → Edit type includes **Custom Properties**. Save a
+new type first, then add properties. Text, Number, Date, Boolean, and single-choice
+Dropdown fields are supported. Required fields show an asterisk; optional checkboxes
+save an unchecked value as No. Required Boolean properties require an explicit
+Yes/No answer. Numbers allow eight integer digits and four decimal places; they
+are JSON numbers and are not an exact financial calculation system.
+
+Definitions use stable UUIDs; renaming fields or dropdown options preserves values.
+Move up/down controls change display order. Archive removes fields/options from
+new entry without erasing saved values. Item details show archived property values
+in a separate section. Archived dropdown selections may remain unchanged on their
+existing item. A property's data type cannot change while it has saved values;
+numeric bounds cannot be tightened past existing values. Adding a required field
+leaves existing records intact and requires completion on their next save.
+
+Each type supports 20 active / 50 total properties, and each dropdown supports 50
+options including archived options. Existing 100-item and 20-type quotas remain.
+Changing an item's type never matches fields by name: confirm clearing all previous
+custom values, including archived ones, and complete the destination fields. Data
+is cleared only on a fully valid save. Without JavaScript, select the type and click
+**Load properties**, then fill its fields and Save.
+
+`item_types/properties.py` centralizes definition-aware fields and serialization.
+`item_types/property_views.py` handles owner-scoped, transactional management.
+`items/forms.py` builds dynamic fields; it never accepts a raw JSON mapping from
+clients. The POST-only custom-fields endpoint renders HTML without saving. Form
+schema versions reject stale writes. The frontend replaces only that field region,
+keeps core drafts, ignores old responses, and blocks Save until loading succeeds.
+
+## Persistent development demos
+
+This feature is opt-in. In your local `.env`, set:
+
+```dotenv
+DJANGO_DEBUG=true
+DEV_DEMO_ENABLED=true
+```
+
+Then recreate the application container to load its environment:
+
+```bash
+docker compose up -d app
+```
+
+The existing **Demo** button creates a development account on first use. Logout
+ends authentication and returns to the landing page without deleting its data.
+Click Demo again in the same browser to resume it. The private 30-day HttpOnly,
+SameSite=Strict cookie is scoped to `/accounts/demo/`; only a token hash is stored
+in the database. No account credentials are stored in localStorage or URLs.
+
+**Reset Demo · Development**, above Log out, opens a confirmation window. Its
+CSRF-protected POST clears the current demo's items, types, and property definitions
+in place, preserves profile/identity, rotates the resume credential, and leaves the
+account signed in. No templates or initial categories are generated.
+
+Losing, clearing, or expiring the cookie creates a new development demo on the next
+Demo click; the old account stays stored. To remove an abandoned account locally,
+use `python manage.py shell` inside the app container, select the precise
+`is_demo=True, is_development_demo=True` user, delete its owned Items first, then
+its user record. Do not use this procedure against production.
+
+Development accounts are excluded from public expiry cleanup and public capacity.
+Public demos retain their one-hour expiry and deletion on logout. Existing temporary
+demos are not converted. Turning the flag off does not delete development data.
+Both DEBUG and the explicit flag are required; production configuration rejects the
+flag. Do not enable it on shared or publicly reachable environments.
+
+Browser tests now use two disposable databases: normal workspace scenarios on
+5174 and development-demo scenarios on 5175. `npm run test:browser` starts both;
+neither uses the local development database. With externally managed test servers,
+set `BROWSER_BASE_URL` and `BROWSER_DEV_BASE_URL`. `BROWSER_TEST_PORT` chooses the
+helper's port; `BROWSER_TEST_DEV_DEMO=true` explicitly enables its development mode.

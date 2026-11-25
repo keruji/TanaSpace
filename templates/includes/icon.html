@@ -1,8 +1,9 @@
-{% load static %}
+{% load ui_assets %}
+{% versioned_static 'images/lucide.svg' as sprite_url %}
 <svg
   class="ui-icon{% if icon_class %} {{ icon_class }}{% endif %}"
   aria-hidden="true"
   focusable="false"
 >
-  <use href="{% static 'images/lucide.svg' %}#{{ icon_name }}"></use>
+  <use href="{{ sprite_url }}#{{ icon_name }}"></use>
 </svg>

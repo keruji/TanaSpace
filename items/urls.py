@@ -4,6 +4,8 @@ from . import views
 
 app_name = "items"
 urlpatterns = [
+    path("custom-fields/", views.custom_fields, name="custom_fields"),
+    path("<int:pk>/favorite/", views.favorite, name="favorite"),
     path("", views.index, name="index"),
     path("new/", views.create, name="create"),
     path("<int:pk>/", views.detail, name="detail"),

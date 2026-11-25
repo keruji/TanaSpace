@@ -1,0 +1,16 @@
+{% extends 'includes/window.html' %}
+{% block window_heading %}<h2 id="window-title">{% if section == 'about' %}About TanaSpace{% else %}Licenses{% endif %}</h2>{% endblock %}
+{% block window_body %}
+{% if section == 'about' %}
+  <div class="about-brand">{% include 'includes/logo.html' with logo_size=48 %}<div><h3>TanaSpace</h3><p>Version {{ app_version }}</p></div></div>
+  <p class="section-caption">A place for the things you want to keep track of.</p>
+  <a class="secondary-button about-link" href="https://github.com/keruji/TanaSpace" target="_blank" rel="noopener noreferrer">
+    <svg class="ui-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .75a11.25 11.25 0 0 0-3.56 21.92c.56.1.77-.24.77-.54v-2.1c-3.13.68-3.79-1.33-3.79-1.33-.51-1.3-1.25-1.64-1.25-1.64-1.02-.7.08-.69.08-.69 1.13.08 1.72 1.16 1.72 1.16 1 1.71 2.62 1.22 3.26.93.1-.73.39-1.22.71-1.5-2.5-.28-5.12-1.25-5.12-5.56 0-1.23.44-2.24 1.16-3.03-.12-.29-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.16a10.8 10.8 0 0 1 5.64 0c2.15-1.46 3.09-1.16 3.09-1.16.61 1.55.23 2.69.11 2.98.72.79 1.16 1.8 1.16 3.03 0 4.32-2.63 5.27-5.13 5.55.4.35.76 1.04.76 2.09v3.09c0 .3.2.65.78.54A11.25 11.25 0 0 0 12 .75Z"/></svg>
+    View on GitHub <span class="sr-only">(opens in a new tab)</span>
+  </a>
+{% else %}
+  <p class="section-caption">Select a project to read its license and notices.</p>
+  <div class="license-list">{% for entry in licenses %}{% include 'help/license_entry.html' %}{% endfor %}</div>
+  {% if additional_licenses %}<details class="additional-licenses"><summary>Additional dependency notices</summary><p class="section-caption">Licenses for supporting dependencies and development tools.</p><div class="license-list">{% for entry in additional_licenses %}{% include 'help/license_entry.html' %}{% endfor %}</div></details>{% endif %}
+{% endif %}
+{% endblock %}

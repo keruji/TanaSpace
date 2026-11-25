@@ -96,3 +96,61 @@ repository changes and report the problem.
 
 Recovery must not create repeated revert commits or duplicate
 replacement pull requests.
+
+## Additive schema rollout for the workspace release
+
+The workspace release adds `accounts.0003_user_nickname` and
+`items.0007_item_is_favorite`. Both keep database defaults so the preceding
+application image can still insert users and items. This is covered by tests
+using the preceding historical models. Existing names, items, ownership, and
+quotas are retained; no database reset or data backfill is required.
+
+Production startup and release preflight deliberately reject pending migrations.
+Publishing the new image does **not** apply these migrations. Before allowing
+this release to deploy, separately review and approve the schema step:
+
+1. Build/publish the reviewed candidate image and record its immutable digest.
+2. Coordinate with deployment/recovery so neither is running, and acquire the
+   same deployment lock for the schema operation.
+3. From the production checkout, run the following with the approved candidate
+   image. These commands are a manual operation, not part of startup or CI:
+
+   ```bash
+   # Use the same session for the lock and migration command.
+   exec 9>"$HOME/.local/state/tanaspace/deployment.lock"
+   flock -x 9
+   # Set candidate_image to the reviewed ghcr.io/...@sha256:... reference.
+   APP_IMAGE="$candidate_image" docker compose \
+     --project-name tanaspace_prod --env-file .env.production \
+     -f compose.production.yml run --rm --no-deps app \
+     python manage.py migrate --noinput
+   flock -u 9
+   ```
+
+4. Allow the ordinary release preflight, application deployment, and public
+   health verification to run. Keep the preflight guard enabled.
+5. If the application rolls back, leave these additive columns and defaults in
+   place. Do not automatically reverse migrations. Schema rollback needs its
+   own review.
+
+No production migration, deployment, or schema rollback is performed by the
+browser tests or normal image publication.
+
+
+## Custom property schema release
+
+This release adds `ItemTypeProperty`, `Item.property_values`, a Tana Type schema
+version, and the development-demo marker/access table. Existing items receive an
+empty JSON object, existing types receive version zero, and existing users remain
+non-development accounts. New fields have database defaults for old-release inserts;
+there is no category/data backfill. Keep `DEV_DEMO_ENABLED=false` in production.
+
+Use the separately reviewed schema process above for these additive migrations
+before deploying this image. Neither startup nor the deployment workflow applies
+them automatically. Do not automatically reverse migrations during rollback.
+
+Old application images do not enforce custom-property validation or confirmed type
+changes. Before opening custom-property writes to production, designate a rollback
+target containing this feature, or suspend item/type writes while an older image is
+running. Database defaults preserve old inserts but cannot supply the new validation
+behavior. Local migration execution does not authorize production migration/deploy.

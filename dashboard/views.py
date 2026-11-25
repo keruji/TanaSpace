@@ -1,14 +1,14 @@
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from django.views.decorators.cache import never_cache
-
+from django.urls import reverse
+from django.views.decorators.http import require_GET
+from common.workspace import workspace_render, workspace_view
 from items.models import Item
 
 
-@never_cache
-@login_required
+@workspace_view
+@require_GET
 def index(request):
-    return render(request, "dashboard/index.html", {
-        "active_nav": "dashboard",
-        "recent_items": Item.objects.filter(owner=request.user)[:3],
-    })
+    items = Item.objects.filter(owner=request.user)
+    return workspace_render(request, "dashboard/content.html", {
+        "active_nav": "dashboard", "page_url": reverse("dashboard:index"),
+        "recent_items": items.select_related("item_type")[:3],
+    }, title="Dashboard · TanaSpace")

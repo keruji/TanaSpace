@@ -1,12 +1,15 @@
 <script>
   (() => {
     let theme;
+    let sidebar;
     try {
+      sidebar = localStorage.getItem("tanaspace-sidebar");
       theme = localStorage.getItem("tanaspace-theme")
         || localStorage.getItem("tanaspace-landing-theme");
     } catch (_) {
       // Use the system theme when storage is unavailable.
     }
+    document.documentElement.dataset.sidebar = ["expanded", "collapsed"].includes(sidebar) ? sidebar : (innerWidth > 800 ? "expanded" : "collapsed");
     document.documentElement.dataset.theme = theme === "light" || theme === "dark"
       ? theme
       : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");

@@ -1,0 +1,19 @@
+{% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+<label class="type-name-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}{% if form.name.field.required %} <svg class="required-marker" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1v10M2 3l8 6M2 9l8-6" stroke="currentColor" fill="none"/></svg>{% endif %}</label>
+<div class="type-name-row">
+  <div class="form-field type-icon-field">
+    <details class="type-icon-picker" data-icon-picker>
+      <summary aria-label="Choose Tana Type icon" title="Choose an icon">{% include 'includes/type_icon.html' with icon=form.icon.value only %}<span class="sr-only">Choose an icon</span></summary>
+      <div class="type-icon-panel">
+        <input type="search" class="type-icon-search" data-icon-search placeholder="Search icons" aria-label="Search icons" autocomplete="off" hidden>
+        <fieldset class="type-icon-grid"><legend class="sr-only">Choose a Tana Type icon</legend>
+          {% for option in form.icon %}<label class="type-icon-option" title="{{ option.choice_label }}">{{ option.tag }}{% include 'includes/type_icon.html' with icon=option.data.value only %}<span class="sr-only">{{ option.choice_label }}</span></label>{% endfor %}
+        </fieldset>
+        <p class="type-icon-empty" data-icon-empty role="status" hidden>No matching icons.</p>
+      </div>
+    </details>
+    {% if form.icon.errors %}<div class="field-errors" role="alert">{{ form.icon.errors }}</div>{% endif %}
+  </div>
+  <div class="form-field">{{ form.name }}{% if form.name.errors %}<div class="field-errors" id="{{ form.name.auto_id }}_error" role="alert">{{ form.name.errors }}</div>{% endif %}</div>
+</div>
+{% include 'includes/field.html' with field=form.description %}

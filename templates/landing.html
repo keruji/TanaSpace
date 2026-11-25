@@ -1,424 +1,169 @@
 {% load static %}
 <!doctype html>
 <html lang="en" class="landing-page">
-
 <head>
-  <meta charset="UTF-8" />
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <meta name="description" content="TanaSpace frontend preview" />
-
-  <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}" />
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Keep a personal inventory of what you own, with custom categories, notes, search, and favorites.">
+  <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
   <title>TanaSpace</title>
   {% include 'includes/theme_init.html' %}
+  {% include 'includes/fonts.html' %}
   <link rel="stylesheet" href="{% static 'app.css' %}?v={{ app_css_version }}">
 </head>
-
-<body class="min-h-screen bg-canvas text-foreground">
-  <div id="preview-bar" class="p-1 text-center text-sm uppercase tracking-wide text-on-action">
-    Preview
-  </div>
-
-  <header id="site-header" class="border-b border-line">
-    <nav class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-6">
-      <a href="/" class="landing-brand text-xl font-bold tracking-tight">
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="site-container site-nav" aria-label="Main navigation">
+      <a href="{% url 'landing' %}" class="brand">
         {% include 'includes/logo.html' %}
         <span>TanaSpace</span>
       </a>
-
-      <div class="flex items-center gap-3 text-sm text-muted sm:gap-6">
+      <div class="site-nav-links">
+        <a href="#features">Features</a>
+        <a href="#about">About</a>
+        <a href="#roadmap">Roadmap</a>
+      </div>
+      <div class="site-nav-actions">
         {% include 'includes/theme_toggle.html' %}
-
-        <a href="#features" class="hidden transition hover:text-foreground sm:inline">
-          Features
-        </a>
-
-        <a href="#about" class="hidden transition hover:text-foreground sm:inline">
-          About
-        </a>
-
-        <a href="#roadmap" class="hidden transition hover:text-foreground sm:inline">
-          Roadmap
-        </a>
-
         <form method="post" action="{% url 'accounts:demo' %}">
           {% csrf_token %}
-          <button type="submit"
-            class="cursor-pointer rounded-lg bg-action px-4 py-2 font-medium text-on-action transition hover:bg-action-hover">
-            Demo
-          </button>
+          <button type="submit" class="primary-button">Demo</button>
         </form>
       </div>
     </nav>
   </header>
-
-  <main>
-    <section class="mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 lg:grid-cols-2">
-      <div>
-        <p data-scroll-reveal="element"
-          class="mb-4 inline-flex rounded-full border border-line bg-brand-soft px-3 py-1 text-sm text-brand-ink"
-        >
-          Inventory, reminders, and planning in one place
-        </p>
-
-        <h1 data-scroll-reveal class="max-w-2xl text-5xl font-bold tracking-tight sm:text-6xl">
-          Keep track of what you own and what comes next.
-        </h1>
-
-        <p data-scroll-reveal class="mt-6 max-w-xl text-lg leading-8 text-muted">
-          TanaSpace helps you record items, remember expirations and
-          warranties, plan grocery runs, save recipes, and organize
-          future builds without scattering details across notes and
-          spreadsheets.
-        </p>
-
-        <div data-scroll-reveal="element" class="mt-8 flex flex-wrap gap-4">
+  <main id="main">
+    <section class="site-container landing-hero" aria-labelledby="landing-title">
+      <div class="hero-copy">
+        <h1 id="landing-title">A shelf for the things you own.</h1>
+        <p>Keep a personal inventory of your tools, devices, and everyday essentials. Save the details you’ll need later and find them when you need them.</p>
+        <div class="hero-actions">
           <form method="post" action="{% url 'accounts:demo' %}">
             {% csrf_token %}
-            <button type="submit"
-              class="cursor-pointer rounded-xl bg-action px-6 py-3 font-semibold text-on-action transition hover:bg-action-hover focus:outline-none focus:ring-2 focus:ring-focus">
-              Try the demo
-            </button>
+            <button type="submit" class="primary-button action-with-icon">{% include 'includes/icon.html' with icon_name='log-in' only %}<span>Try the demo</span></button>
           </form>
-
-          <a
-            href="#features"
-            class="rounded-xl border border-line px-6 py-3 font-semibold text-foreground transition hover:border-action hover:bg-soft"
-          >
-            See what it tracks
-          </a>
+          <a class="secondary-button" href="#features">Explore features</a>
         </div>
       </div>
 
-      <div data-scroll-reveal="element" class="rounded-3xl border border-line bg-surface p-6 shadow-2xl shadow-prussian-blue-950/10">
-        <div class="mb-6 flex items-center justify-between">
-          <div>
-            <p data-scroll-reveal class="font-semibold">
-              Today in TanaSpace
-            </p>
-
-            <p data-scroll-reveal class="text-sm text-muted">
-              4 active lists and reminders
-            </p>
+      <figure class="landing-shelf" aria-labelledby="shelf-caption">
+        <figcaption id="shelf-caption"><strong>My Tana</strong><span>Example collection</span></figcaption>
+        <div class="landing-shelf-row">
+          <div class="shelf-record shelf-record-device">
+            {% include 'includes/icon.html' with icon_name='package' only %}
+            <div><strong>Travel camera</strong><span>Electronics</span></div>
           </div>
-
-          <button type="button"
-            class="rounded-lg border border-line px-3 py-2 text-sm transition hover:bg-soft">
-            Add item
-          </button>
+          <div class="shelf-record shelf-record-favorite">
+            {% include 'includes/icon.html' with icon_name='star' only %}
+            <div><strong>Trail kit</strong><span>Outdoors</span></div>
+          </div>
         </div>
+        <div class="landing-shelf-row">
+          <div class="shelf-record shelf-record-kitchen">
+            {% include 'includes/icon.html' with icon_name='package' only %}
+            <div><strong>Pour-over set</strong><span>Kitchen</span></div>
+          </div>
+          <div class="shelf-record shelf-record-tools">
+            {% include 'includes/icon.html' with icon_name='package' only %}
+            <div><strong>Hex key set</strong><span>Tools</span></div>
+          </div>
+        </div>
+        <div class="shelf-footer">
+          <span>{% include 'includes/icon.html' with icon_name='notebook-tabs' only %} 4 items</span>
+          <span>{% include 'includes/icon.html' with icon_name='star' only %} 1 favorite</span>
+        </div>
+      </figure>
+    </section>
 
-        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <article data-scroll-reveal="element" class="preview-item-card aspect-[3/4] rounded-xl p-4">
-            <p data-scroll-reveal class="text-sm font-semibold">
-              Laptop Warranty
-            </p>
-
-            <p data-scroll-reveal class="preview-item-meta mt-2 text-xs">
-              42 days left
-            </p>
+    <section id="features" class="site-section site-features" aria-labelledby="features-title">
+      <div class="site-container">
+        <h2 id="features-title">What you can do today</h2>
+        <div class="feature-grid">
+          <article>
+            <span class="item-symbol">{% include 'includes/icon.html' with icon_name='package' only %}</span>
+            <h3>Save item details</h3>
+            <p>Give each item a name, description, and notes. Return to the dashboard to pick up where you left off.</p>
           </article>
-
-          <article data-scroll-reveal="element" class="preview-item-card aspect-[3/4] rounded-xl p-4">
-            <p data-scroll-reveal class="text-sm font-semibold">
-              Grocery Run
-            </p>
-
-            <p data-scroll-reveal class="preview-item-meta mt-2 text-xs">
-              12 items
-            </p>
+          <article>
+            <span class="item-symbol">{% include 'includes/icon.html' with icon_name='notebook-tabs' only %}</span>
+            <h3>Organize with Tana Types</h3>
+            <p>Make categories that fit your collection and add custom fields for the details each category needs.</p>
           </article>
-
-          <article data-scroll-reveal="element" class="preview-item-card aspect-[3/4] rounded-xl p-4">
-            <p data-scroll-reveal class="text-sm font-semibold">
-              Pantry
-            </p>
-
-            <p data-scroll-reveal class="preview-item-meta mt-2 text-xs">
-              3 expiring soon
-            </p>
+          <article>
+            <span class="item-symbol">{% include 'includes/icon.html' with icon_name='search' only %}</span>
+            <h3>Find what you saved</h3>
+            <p>Search by name, filter by type, or mark items as favorites so you can get back to them quickly.</p>
           </article>
-
-          <article data-scroll-reveal="element" class="preview-item-card aspect-[3/4] rounded-xl p-4">
-            <p data-scroll-reveal class="text-sm font-semibold">
-              Recipe Ideas
-            </p>
-
-            <p data-scroll-reveal class="preview-item-meta mt-2 text-xs">
-              8 saved
-            </p>
-          </article>
-
-          <article data-scroll-reveal="element" class="preview-item-card aspect-[3/4] rounded-xl p-4">
-            <p data-scroll-reveal class="text-sm font-semibold">
-              Future PC Build
-            </p>
-
-            <p data-scroll-reveal class="preview-item-meta mt-2 text-xs">
-              5 parts planned
-            </p>
-          </article>
-
-          <button
-            type="button"
-            aria-label="Add a new record"
-            class="flex aspect-[3/4] items-center justify-center rounded-xl border border-dashed border-line text-3xl text-muted transition hover:border-action hover:text-brand-ink"
-          >
-            {% include 'includes/icon.html' with icon_name='plus' only %}
-          </button>
         </div>
       </div>
     </section>
 
-    <section id="features" class="mx-auto max-w-6xl px-6 py-20">
-      <div class="max-w-3xl">
-        <p data-scroll-reveal class="text-sm font-semibold uppercase text-brand-ink">
-          Features
-        </p>
-
-        <h2 data-scroll-reveal class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-          A practical space for the things you own, use, and plan.
-        </h2>
-
-        <p data-scroll-reveal class="mt-4 leading-7 text-muted">
-          TanaSpace is designed around everyday records: items,
-          reminders, groceries, recipes, computer builds, and other
-          personal systems that are easier to manage when they live in
-          one organized place.
-        </p>
-      </div>
-
-      <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <article data-scroll-reveal="element" class="rounded-xl border border-line bg-surface p-6">
-          <h3 data-scroll-reveal class="font-semibold">
-            Item Records
-          </h3>
-
-          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
-            Record devices, consumables, tools, supplies, or almost
-            anything with details like item type, variant, size, weight,
-            brand, notes, and photos later.
-          </p>
-        </article>
-
-        <article data-scroll-reveal="element" class="rounded-xl border border-line bg-surface p-6">
-          <h3 data-scroll-reveal class="font-semibold">
-            Expiration and Warranty Reminders
-          </h3>
-
-          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
-            Add expiration dates, warranty periods, renewal dates, or
-            service schedules so TanaSpace can remind you before
-            something is wasted, forgotten, or out of coverage.
-          </p>
-        </article>
-
-        <article data-scroll-reveal="element" class="rounded-xl border border-line bg-surface p-6">
-          <h3 data-scroll-reveal class="font-semibold">
-            Grocery Checklists
-          </h3>
-
-          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
-            Start from reusable grocery templates, then remove or add
-            items for a specific scheduled grocery run without changing
-            the original template.
-          </p>
-        </article>
-
-        <article data-scroll-reveal="element" class="rounded-xl border border-line bg-surface p-6">
-          <h3 data-scroll-reveal class="font-semibold">
-            Recipe Collections
-          </h3>
-
-          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
-            Save recipes with ingredients, step-by-step instructions,
-            estimated time, preparation notes, and the actions needed at
-            each stage.
-          </p>
-        </article>
-
-        <article data-scroll-reveal="element" class="rounded-xl border border-line bg-surface p-6">
-          <h3 data-scroll-reveal class="font-semibold">
-            PC Build Planner
-          </h3>
-
-          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
-            Record a current computer build, track components, and plan
-            future builds with parts lists, upgrade ideas, and checklist
-            progress.
-          </p>
-        </article>
-
-        <article data-scroll-reveal="element" class="rounded-xl border border-dashed border-line bg-quiet p-6">
-          <h3 data-scroll-reveal class="font-semibold">
-            More Tools Later
-          </h3>
-
-          <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
-            The feature set can keep growing as the product becomes
-            clearer, with new spaces for other routines, collections,
-            and planning workflows.
-          </p>
-        </article>
+    <section id="about" class="site-section" aria-labelledby="about-title">
+      <div class="site-container about-layout">
+        <h2 id="about-title">About TanaSpace</h2>
+        <p>TanaSpace gives the things you own a place to live alongside the details you’d otherwise keep in separate notes, lists, and spreadsheets.</p>
       </div>
     </section>
 
-    <section id="about" class="border-t border-line">
-      <div class="mx-auto max-w-6xl px-6 py-20">
-        <p data-scroll-reveal class="text-sm font-semibold uppercase text-brand-ink">
-          About
-        </p>
-
-        <h2 data-scroll-reveal class="mt-3 max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl">
-          A personal space, built one step at a time.
-        </h2>
-
-        <p data-scroll-reveal class="mt-4 max-w-3xl leading-7 text-muted">
-          TanaSpace now has a Django foundation with personal accounts and
-          a dashboard. Inventory, reminders, and planning tools are next
-          as your space grows.
-        </p>
-      </div>
-    </section>
-
-    <section id="roadmap" class="border-t border-line">
-      <div class="mx-auto max-w-6xl px-6 py-20">
-        <p data-scroll-reveal class="text-sm font-semibold uppercase text-brand-ink">
-          Roadmap
-        </p>
-
-        <h2 data-scroll-reveal class="mt-3 max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl">
-          From preview to a complete personal space platform.
-        </h2>
-
-        <p data-scroll-reveal class="mt-4 max-w-3xl leading-7 text-muted">
-          The roadmap is organized around major product milestones:
-          first shaping the landing page, then proving the frontend
-          experience, adding the Django backend, preparing the release,
-          and finally bringing the experience to mobile.
-        </p>
-
-        <div class="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <article data-scroll-reveal="element" class="rounded-xl border border-line bg-brand-soft p-5">
-            <p data-scroll-reveal class="text-sm font-semibold uppercase text-brand-ink">
-              Phase 01
-            </p>
-
-            <h3 data-scroll-reveal class="mt-3 font-semibold">
-              Landing Page
-            </h3>
-
-            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
-              Define the product message, feature direction, roadmap,
-              and first public-facing page for TanaSpace.
-            </p>
-          </article>
-
-          <article data-scroll-reveal="element" class="rounded-xl border border-line bg-brand-soft p-5">
-            <p data-scroll-reveal class="text-sm font-semibold text-brand-ink">
-              Phase 02
-            </p>
-
-            <h3 data-scroll-reveal class="mt-3 font-semibold">
-              Frontend Preview
-            </h3>
-
-            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
-              Build the first preview interface and validate the core
-              layouts, item flows, and product experience.
-            </p>
-          </article>
-
-          <article data-scroll-reveal="element" class="rounded-xl border border-line bg-brand-soft p-5">
-            <p data-scroll-reveal class="text-sm font-semibold text-muted">
-              Phase 03 · Current
-            </p>
-
-            <h3 data-scroll-reveal class="mt-3 font-semibold">
-              Backend Foundation
-            </h3>
-
-            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
-              Start the Python and Django backend with models, database
-              structure, authentication, and API endpoints.
-            </p>
-          </article>
-
-          <article data-scroll-reveal="element" class="rounded-xl border border-line bg-quiet p-5">
-            <p data-scroll-reveal class="text-sm font-semibold text-muted">
-              Phase 04
-            </p>
-
-            <h3 data-scroll-reveal class="mt-3 font-semibold">
-              Feature Expansion
-            </h3>
-
-            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
-              Add the main app features, connect frontend workflows, and
-              finalize backend behavior.
-            </p>
-          </article>
-
-          <article data-scroll-reveal="element" class="rounded-xl border border-line bg-quiet p-5">
-            <p data-scroll-reveal class="text-sm font-semibold text-muted">
-              Phase 05
-            </p>
-
-            <h3 data-scroll-reveal class="mt-3 font-semibold">
-              Release
-            </h3>
-
-            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
-              Polish the product, test core paths, prepare deployment,
-              and launch the first stable version.
-            </p>
-          </article>
-
-          <article data-scroll-reveal="element" class="rounded-xl border border-line bg-quiet p-5">
-            <p data-scroll-reveal class="text-sm font-semibold text-muted">
-              Phase 06
-            </p>
-
-            <h3 data-scroll-reveal class="mt-3 font-semibold">
-              Initial Mobile App
-            </h3>
-
-            <p data-scroll-reveal class="mt-3 text-sm leading-6 text-muted">
-              Design and build the first mobile experience after the web
-              app and backend are stable.
-            </p>
-          </article>
-        </div>
+    <section id="roadmap" class="site-section site-roadmap" aria-labelledby="roadmap-title">
+      <div class="site-container roadmap-content">
+        <h2 id="roadmap-title">From preview to a complete personal space platform.</h2>
+        <p class="roadmap-intro">The roadmap is organized around major product milestones:
+          first shaping the landing page, then proving the frontend experience,
+          adding the Django backend, preparing the release, and finally bringing
+          the experience to mobile.</p>
+        <ol class="roadmap-list">
+          <li>
+            <span>Phase 01</span>
+            <h3>Landing Page</h3>
+            <p>Define the product message, feature direction, roadmap, and first public-facing page for TanaSpace.</p>
+          </li>
+          <li>
+            <span>Phase 02</span>
+            <h3>Frontend Preview</h3>
+            <p>Build the first preview interface and validate the core layouts, item flows, and product experience.</p>
+          </li>
+          <li>
+            <span>Phase 03 · Current</span>
+            <h3>Backend Foundation</h3>
+            <p>Start the Python and Django backend with models, database structure, authentication, and API endpoints.</p>
+          </li>
+          <li>
+            <span>Phase 04</span>
+            <h3>Feature Expansion</h3>
+            <p>Add the main app features, connect frontend workflows, and finalize backend behavior.</p>
+          </li>
+          <li>
+            <span>Phase 05</span>
+            <h3>Release</h3>
+            <p>Polish the product, test core paths, prepare deployment, and launch the first stable version.</p>
+          </li>
+          <li>
+            <span>Phase 06</span>
+            <h3>Initial Mobile App</h3>
+            <p>Design and build the first mobile experience after the web app and backend are stable.</p>
+          </li>
+        </ol>
       </div>
     </section>
   </main>
 
   <footer class="landing-footer">
-    <div class="landing-footer-inner">
-      <a href="/" class="landing-brand landing-footer-brand" aria-label="TanaSpace home">
-        {% include 'includes/logo.html' with logo_src='images/logo-24.svg' logo_size=24 %}
+    <div class="site-container footer-layout">
+      <a href="{% url 'landing' %}" class="brand" aria-label="TanaSpace home">
+        {% include 'includes/logo.html' %}
         <span>TanaSpace</span>
       </a>
-
-      <a href="https://github.com/keruji/TanaSpace"
-        class="landing-footer-github"
-        target="_blank" rel="noopener noreferrer"
-        aria-label="TanaSpace on GitHub (opens in a new tab)"
-        title="View TanaSpace on GitHub">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-          aria-hidden="true" focusable="false">
-          <path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 19 4.77 5.07 5.07 0 0 0 18.91 1S17.73.65 15 2.48a13.38 13.38 0 0 0-7 0C5.27.65 4.09 1 4.09 1A5.07 5.07 0 0 0 4 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 8 18.13V22" />
-        </svg>
-      </a>
+      <nav aria-label="Footer navigation">
+        <a href="#features">Features</a>
+        <a href="#about">About</a>
+        <a href="#roadmap">Roadmap</a>
+      </nav>
+      <a href="https://github.com/keruji/TanaSpace" target="_blank" rel="noopener noreferrer" aria-label="TanaSpace on GitHub (opens in a new tab)">GitHub {% include 'includes/icon.html' with icon_name='arrow-up-right' only %}</a>
+      <small>© {% now "Y" %} TanaSpace</small>
     </div>
-
-    <p class="landing-footer-copyright">© {% now "Y" %} TanaSpace. All rights reserved.</p>
   </footer>
-
-  <script type="module" src="{% static 'app.js' %}"></script>
+  <script type="module" src="{% static 'app.js' %}?v={{ app_js_version }}"></script>
 </body>
-
 </html>

@@ -39,7 +39,9 @@ TEMPLATES = [{
     "BACKEND": "django.template.backends.django.DjangoTemplates",
     "DIRS": [BASE_DIR / "templates"],
     "APP_DIRS": True,
-    "OPTIONS": {"context_processors": [
+    "OPTIONS": {
+        "libraries": {"ui_assets": "common.templatetags.ui_assets"},
+        "context_processors": [
         "django.template.context_processors.request",
         "django.contrib.auth.context_processors.auth",
         "django.contrib.messages.context_processors.messages",
@@ -74,6 +76,9 @@ LOGIN_REDIRECT_URL = "dashboard:index"
 LOGOUT_REDIRECT_URL = "landing"
 DEMO_ACCOUNT_TTL_SECONDS = int(os.environ.get("DEMO_ACCOUNT_TTL_SECONDS", "3600"))
 DEMO_MAX_ACTIVE_USERS = int(os.environ.get("DEMO_MAX_ACTIVE_USERS", "25"))
+DEV_DEMO_ENABLED = os.environ.get("DEV_DEMO_ENABLED", "false").lower() == "true"
+if DEV_DEMO_ENABLED and not DEBUG:
+    raise ImproperlyConfigured("DEV_DEMO_ENABLED requires DJANGO_DEBUG=true.")
 MAX_ITEM_TYPES_PER_USER = 20
 MAX_ITEMS_PER_USER = 100
 LANGUAGE_CODE = "en-us"
@@ -91,7 +96,7 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 DATA_UPLOAD_MAX_MEMORY_SIZE = 64 * 1024
-DATA_UPLOAD_MAX_NUMBER_FIELDS = 50
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 400
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SECONDS", "3600"))

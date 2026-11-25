@@ -1,9 +1,8 @@
 {% extends 'registration/base.html' %}
 {% block title %}Log in · TanaSpace{% endblock %}
 {% block auth_content %}
-<span class="eyebrow">Welcome back</span>
 <h2 id="auth-title">Log in to your space</h2>
-<p class="card-description">A fresh start to a more organized day.</p>
+<p class="card-description">Enter your username and password.</p>
 <form method="post" action="{% url 'accounts:login' %}">
   {% csrf_token %}
   <input type="hidden" name="next" value="{{ next }}">

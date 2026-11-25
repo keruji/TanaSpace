@@ -68,10 +68,20 @@ your choice carries across the site and is remembered for your next visit.
 
 <!-- Replace the placeholder above with your dashboard feature image. -->
 
+### Find what you need
+
+Search items by name and filter by Tana Type. Mark frequently used records as
+**Favorites** to keep them one click away. Lists keep their filters when you
+open and close an item window.
+
+Use the account menu to update your nickname and personal name in **Profile**,
+or manage your categories in **Settings**. Collapse the sidebar for more room;
+on mobile, open navigation with the menu button.
+
 ## Find your way around
 
 1. [Open TanaSpace](https://tanaspace.dpdns.org).
-2. Go to **Tana Types** and create a category for your items.
+2. Open the account menu, choose **Settings → Tana Types**, and create a category for your items.
 3. Open **My Tana**, choose **Add item**, and save your first record.
 4. Return to the **Dashboard** to see your latest items.
 
@@ -80,7 +90,7 @@ your choice carries across the site and is remembered for your next visit.
 - Expiration and warranty reminders.
 - Reusable grocery checklists and recipe collections.
 - PC build planning and component lists.
-- Favorites, search, and notifications.
+- Notifications.
 
 ## Share feedback
 
@@ -104,7 +114,7 @@ under the license’s terms. For commercial use outside those terms, separate
 permission is required. Read [LICENSE](LICENSE) for the full terms and notices.
 
 Third-party software keeps its own licenses. UI icons are from
-[Lucide](static/images/lucide-LICENSE.txt).
+[Lucide](static/images/lucide-LICENSE.txt) and [OpenMoji](https://openmoji.org/), licensed under [CC BY-SA 4.0](static/images/openmoji/LICENSE.txt). OpenMoji black SVGs are used unmodified and displayed using CSS masks.
 
 These terms do not retract permissions already granted for versions previously
 released under the Unlicense.

@@ -1,0 +1,31 @@
+{% extends 'includes/window.html' %}
+{% block window_heading %}
+<p class="record-type">{% include 'includes/icon.html' with icon_name='notebook-tabs' only %} {{ selected_type.name }}</p>
+<h2 id="window-title">{% if archive_property %}Archive {{ property.name }}?{% elif delete_property %}Delete {{ property.name }}?{% elif property %}Edit {{ property.name }}{% else %}Add property{% endif %}</h2>
+{% endblock %}
+{% block window_body %}
+{% if archive_property %}
+<p class="section-caption">This property will leave item forms. Its saved values will remain available in item details under Archived Properties.</p>
+{% if property_error %}<p class="form-errors" role="alert">{{ property_error }}</p>{% endif %}
+<form method="post" class="modal-actions" data-async-form>{% csrf_token %}<input type="hidden" name="schema_version" value="{{ selected_type.property_schema_version }}"><input type="hidden" name="return_to" value="{{ return_to }}"><a class="text-action" href="{% url 'item_types:edit' selected_type.pk %}?{{ return_query }}" data-window-back>Cancel</a><button class="danger-button action-with-icon" type="submit" name="confirm_archive" value="yes">{% include 'includes/icon.html' with icon_name='trash-2' only %} Archive property</button></form>
+{% elif delete_property %}
+<p class="section-caption">This permanently deletes the property and its saved values from items of this type.</p>
+{% if property_error %}<p class="form-errors" role="alert">{{ property_error }}</p>{% endif %}
+<form method="post" class="modal-actions" data-async-form>{% csrf_token %}<input type="hidden" name="schema_version" value="{{ selected_type.property_schema_version }}"><input type="hidden" name="return_to" value="{{ return_to }}"><a class="text-action" href="{% url 'item_types:edit' selected_type.pk %}?{{ return_query }}" data-window-back>Cancel</a><button class="danger-button action-with-icon" type="submit" name="confirm_delete" value="yes">{% include 'includes/icon.html' with icon_name='trash-2' only %} Delete property</button></form>
+{% else %}
+<form method="post" class="item-form" data-property-editor data-async-form data-dirty-check>
+  {% csrf_token %}<input type="hidden" name="schema_version" value="{{ selected_type.property_schema_version }}"><input type="hidden" name="return_to" value="{{ return_to }}">
+  {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+  {% include 'includes/field.html' with field=form.name %}
+  {% include 'includes/field.html' with field=form.data_type %}
+  {% include 'includes/field.html' with field=form.required %}
+  <div data-number-config>{% include 'includes/field.html' with field=form.minimum %}{% include 'includes/field.html' with field=form.maximum %}</div>
+  <fieldset class="dropdown-editor" data-dropdown-config><legend>Dropdown options</legend><p class="section-caption">Used only for Dropdown properties. Archive existing options rather than deleting them.</p>
+  {{ options.management_form }}{{ options.non_form_errors }}
+  {% for option in options %}<div class="option-row">{% include 'includes/form.html' with form=option %}</div>{% endfor %}
+  <button class="text-action" type="submit" name="_action" value="add_option" formnovalidate>{% include 'includes/icon.html' with icon_name='plus' only %} Add option</button>
+  </fieldset>
+  <div class="modal-actions"><a class="text-action" href="{% url 'item_types:edit' selected_type.pk %}?{{ return_query }}" data-window-back>Cancel</a><button class="primary-button action-with-icon" type="submit">{% include 'includes/icon.html' with icon_name='save' only %} Save property</button></div>
+</form>
+{% endif %}
+{% endblock %}
