@@ -12,7 +12,6 @@
       <input name="q" type="search" maxlength="160" placeholder="Search items" aria-label="Search items">
       <button type="submit" class="icon-button" aria-label="Search">{% include 'includes/icon.html' with icon_name='search' only %}</button>
     </form>
-    {% include 'includes/theme_toggle.html' %}
     <div class="account-control">
       <button class="icon-button" type="button" id="account-toggle" aria-controls="account-menu" aria-expanded="false" aria-haspopup="menu" aria-label="Account menu" hidden>
         {% include 'includes/icon.html' with icon_name='user-round' icon_class='avatar' only %}
@@ -22,6 +21,12 @@
         <div role="menu" aria-labelledby="account-toggle">
           <a role="menuitem" href="{% url 'accounts:profile' %}">Profile</a>
           <a role="menuitem" href="{% url 'accounts:settings' %}">Settings</a>
+          <button type="button" role="menuitem" data-help-toggle aria-expanded="false" aria-controls="help-menu">Help {% include 'includes/icon.html' with icon_name='chevron-down' only %}</button>
+          <div id="help-menu" class="help-menu" data-help-menu>
+            <a role="menuitem" href="https://github.com/keruji/TanaSpace/issues" target="_blank" rel="noopener noreferrer">Report a Bug <span class="sr-only">(opens in a new tab)</span></a>
+            <a role="menuitem" href="{% url 'help_about' %}" data-window>About</a>
+            <a role="menuitem" href="{% url 'help_licenses' %}" data-window>Licenses</a>
+          </div>
           <hr>
           {% if can_reset_demo %}<a role="menuitem" href="{% url 'accounts:reset_demo' %}" data-window>Reset Demo <span class="development-label">Development</span></a>{% endif %}
           <form method="post" action="{% url 'accounts:logout' %}" data-logout>{% csrf_token %}<button role="menuitem" type="submit">Log out</button></form>
@@ -49,6 +54,7 @@
         <span>{% include 'includes/icon.html' with icon_name='star' only %}</span><span class="nav-label">Favorites</span><span class="nav-tooltip" aria-hidden="true">Favorites</span>
       </a>
     </nav>
+    <div class="sidebar-theme">{% include 'includes/theme_toggle.html' with sidebar_theme=True %}</div>
   </aside>
   <div class="drawer-scrim" data-sidebar-close hidden></div>
   <div id="workspace-view" hx-history-elt hx-history="false">{% block app_main %}{% endblock %}</div>

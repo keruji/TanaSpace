@@ -7,7 +7,7 @@
   {% elif modal_mode == 'delete' %}
     <h2 id="window-title">Delete {{ selected_type.name }}?</h2>
   {% else %}
-    <p class="record-type">{% include 'includes/icon.html' with icon_name='notebook-tabs' only %} Tana Type</p>
+    <p class="record-type">{% include 'includes/type_icon.html' with icon=selected_type.icon only %} Tana Type</p>
     <h2 id="window-title">{{ selected_type.name }}</h2>
   {% endif %}
 {% endblock %}
@@ -20,7 +20,7 @@
       <form data-async-form method="post" action="{% url 'item_types:create' %}" class="item-form" data-dirty-check>
         {% csrf_token %}
         <input type="hidden" name="return_to" value="{{ return_to }}">
-        {% include 'includes/form.html' %}
+        {% include 'item_types/form.html' %}
         <button class="primary-button action-with-icon" type="submit">{% include 'includes/icon.html' with icon_name='save' only %}<span>Save type</span></button>
       </form>
     {% endif %}
@@ -28,7 +28,7 @@
     <form data-async-form method="post" action="{% url 'item_types:edit' selected_type.pk %}" class="item-form" data-dirty-check>
       {% csrf_token %}
       <input type="hidden" name="return_to" value="{{ return_to }}">
-      {% include 'includes/form.html' %}
+      {% include 'item_types/form.html' %}
       <button class="primary-button action-with-icon" type="submit">{% include 'includes/icon.html' with icon_name='save' only %}<span>Save changes</span></button>
     </form>
     {% include 'item_types/properties.html' %}

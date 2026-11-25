@@ -20,7 +20,7 @@ export function initSelects(root) {
     }, true);
     listening = true;
   }
-  for (const select of root.querySelectorAll('select:not([multiple]):not([data-select-ready])')) {
+  for (const select of root.querySelectorAll('select:not([multiple]):not([data-select-ready]):not([data-native-select])')) {
     if (select.size > 1) continue;
     const container = document.createElement('div');
     container.className = 'select-control';
@@ -65,29 +65,35 @@ export function initSelects(root) {
     error.className = 'select-error';
     error.setAttribute('role', 'alert');
     container.append(button, list, error);
-    let opened = false, cursor = 0, buffer = '', typedAt = 0;
-    const choices = [...select.options].filter(option => !option.disabled && !option.closest('optgroup[disabled]'));
+    let opened = false, cursor = 0, buffer = '', typedAt = 0, hasSelection = false;
+    const choices = [...select.options].filter(option =>
+      !option.disabled && !option.closest('optgroup[disabled]') &&
+      !(!option.value && select.required)
+    );
     const nodes = choices.map((choice, index) => {
       const option = document.createElement('div');
       option.id = `${list.id}-${index}`;
       option.className = 'select-option';
+      if (choice.parentElement.tagName === 'OPTGROUP') option.classList.add('select-option-indented');
       option.setAttribute('role', 'option');
       const name = document.createElement('span');
-      name.textContent = !choice.value && select.required ? 'Choose an option' : choice.textContent;
+      name.textContent = !choice.value && /^choose\b/i.test(choice.textContent.trim())
+        ? 'Clear selection' : choice.textContent;
       const check = document.createElement('span');
       check.className = 'select-check';
       check.setAttribute('aria-hidden', 'true');
       check.textContent = '✓';
       option.append(name, check);
       option.addEventListener('pointerdown', event => event.preventDefault());
-      option.addEventListener('pointermove', () => highlight(index));
-      option.addEventListener('click', () => { cursor = index; commit(); button.focus(); });
+      option.addEventListener('pointermove', () => { hasSelection = true; highlight(index); });
+      option.addEventListener('click', () => { hasSelection = true; cursor = index; commit(); button.focus(); });
       list.append(option);
       return option;
     });
     function sync() {
+      button.disabled = select.disabled;
       text.textContent = !select.value && select.required ? 'Choose an option' : select.selectedOptions[0]?.textContent || 'Choose an option';
-      button.classList.toggle('is-placeholder', !select.value && select.required);
+      button.classList.toggle('is-placeholder', !select.value && (select.required || select.selectedOptions[0]?.disabled));
       choices.forEach((choice, index) => nodes[index].setAttribute('aria-selected', String(choice.selected)));
     }
     function highlight(index) {
@@ -111,7 +117,7 @@ export function initSelects(root) {
       if (active?.root === container) active = null;
     }
     function commit() {
-      if (opened && choices[cursor]) {
+      if (opened && hasSelection && choices[cursor]) {
         select.value = choices[cursor].value;
         select.dispatchEvent(new Event('input', { bubbles: true }));
         select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -140,6 +146,7 @@ export function initSelects(root) {
       list.style.top = `${up ? rect.top - actualHeight - 6 : rect.bottom + 6}px`;
       list.style.visibility = '';
       opened = true;
+      hasSelection = choices.some(choice => choice.selected);
       button.setAttribute('aria-expanded', 'true');
       active = { root: container, list, close, commit };
       highlight(Math.max(0, choices.findIndex(choice => choice.selected)));
@@ -157,15 +164,18 @@ export function initSelects(root) {
         else if (event.key === 'ArrowUp') highlight(cursor - 1);
         else if (event.key === 'Home') highlight(0);
         else if (event.key === 'End') highlight(choices.length - 1);
-        else commit();
+        else { hasSelection = true; commit(); }
+        if (opened) hasSelection = true;
       } else if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
         event.preventDefault();
         if (!opened) open();
+        const hadSelection = hasSelection;
+        hasSelection = true;
         buffer = Date.now() - typedAt < 700 ? buffer + event.key : event.key;
         typedAt = Date.now();
         const repeated = [...buffer].every(letter => letter.toLowerCase() === buffer[0].toLowerCase());
         const query = (repeated ? buffer[0] : buffer).toLocaleLowerCase();
-        const start = repeated ? cursor + 1 : 0;
+        const start = repeated && hadSelection ? cursor + 1 : 0;
         for (let offset = 0; offset < choices.length; offset++) {
           const index = (start + offset) % choices.length;
           if (choices[index].textContent.toLocaleLowerCase().startsWith(query)) { highlight(index); break; }
@@ -177,6 +187,7 @@ export function initSelects(root) {
       sync();
       if (select.validity.valid) { error.textContent = ''; button.removeAttribute('aria-invalid'); }
     });
+    select.addEventListener('select-sync', sync);
     select.addEventListener('invalid', event => {
       event.preventDefault();
       error.textContent = select.validationMessage;

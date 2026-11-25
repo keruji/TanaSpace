@@ -1,6 +1,7 @@
 import htmx from 'htmx.org';
 import { initWorkspaceShell } from './workspace-shell.js';
 import { initSelects, closeSelects } from './select.js';
+import { initSearchBuilder } from './search-builder.js';
 
 // HTMX handles transport and HTML swaps. This controller owns URL history so
 // dirty forms can reject Back/Forward before a fragment is replaced.
@@ -34,18 +35,60 @@ export function initWorkspace() {
     state = { ...state, scroll: main()?.scrollTop || 0 };
     history.replaceState({ ...history.state, tana: state }, '', currentURL());
   }
-  function commit(url, { replace = false, origin = null } = {}) {
-    state = { index: replace ? state.index : state.index + 1, url, origin, scroll: main()?.scrollTop || 0 };
+  function commit(url, { replace = false, origin = null, previousWindow = null, closeToOrigin = false } = {}) {
+    state = { index: replace ? state.index : state.index + 1, url, origin, previousWindow, closeToOrigin, scroll: main()?.scrollTop || 0 };
     history[replace ? 'replaceState' : 'pushState']({ tana: state }, '', url);
   }
   function windowFocus() {
     const win = dialog();
     if (!win) return;
     const error = win.querySelector('.form-field:has(.field-errors)');
-    (error?.querySelector('input, select, textarea') || win.querySelector('input:not([type="hidden"]), select, textarea') || win.querySelector('.modal-close') || win).focus();
+    (error?.querySelector('input, select, textarea, summary') || win.querySelector('input:not([type="hidden"]):not([type="radio"]):not([data-icon-search]), select, textarea') || win.querySelector('.modal-close') || win).focus();
+  }
+  function closeIconPicker(picker, restoreFocus = false) {
+    const panel = picker.querySelector('.type-icon-panel');
+    if (picker.dataset.floating && panel.matches(':popover-open')) panel.hidePopover();
+    picker.open = false;
+    if (restoreFocus) picker.querySelector('summary').focus({ preventScroll: true });
+  }
+  function showIconPicker(picker) {
+    const panel = picker.querySelector('.type-icon-panel');
+    if (picker.dataset.floating) {
+      const rect = picker.querySelector('summary').getBoundingClientRect();
+      panel.style.left = '12px';
+      panel.style.top = '0px';
+      panel.style.maxHeight = 'none';
+      panel.style.visibility = 'hidden';
+      panel.showPopover();
+      const panelRect = panel.getBoundingClientRect();
+      panel.style.left = `${Math.max(12, Math.min(rect.left, innerWidth - panelRect.width - 12))}px`;
+      const desired = panelRect.height;
+      const below = innerHeight - rect.bottom - 12, above = rect.top - 12;
+      const up = below < Math.min(desired, 160) && above > below;
+      panel.style.maxHeight = `${Math.max(40, Math.min(desired, up ? above : below))}px`;
+      const height = panel.getBoundingClientRect().height;
+      panel.style.top = `${up ? rect.top - height - 4 : rect.bottom + 4}px`;
+      panel.style.visibility = '';
+    }
+    picker.querySelector('[data-icon-search]').focus({ preventScroll: true });
   }
   function hydrate({ focus = false, resetForms = false } = {}) {
+    initSearchBuilder(view);
     initSelects(view);
+    for (const picker of view.querySelectorAll('[data-icon-picker]:not([data-picker-ready])')) {
+      picker.dataset.pickerReady = 'true';
+      const search = picker.querySelector('[data-icon-search]');
+      search.hidden = false;
+      const panel = picker.querySelector('.type-icon-panel');
+      if ('showPopover' in HTMLElement.prototype) {
+        picker.dataset.floating = 'true';
+        panel.setAttribute('popover', 'manual');
+      }
+      picker.addEventListener('toggle', () => {
+        if (picker.open) showIconPicker(picker);
+        else if (picker.dataset.floating && panel.matches(':popover-open')) panel.hidePopover();
+      });
+    }
     for (const editor of view.querySelectorAll('[data-property-editor]')) configureProperty(editor);
     for (const form of view.querySelectorAll('[data-dirty-check]')) {
       if (!baseline.has(form) || resetForms) baseline.set(form, formValue(form));
@@ -110,12 +153,13 @@ export function initWorkspace() {
     if (!entry) remember();
     shell.closeOverlays(); supersede();
     const origin = entry?.origin || state.origin || { url: main().dataset.pageUrl, index: dialog() ? null : state.index, scroll: main().scrollTop };
+    const previousWindow = dialog() ? new URL(state.url, location.origin).pathname : null;
     message('Loading window…');
     const navigationGeneration = generation;
     const host = document.querySelector('#modal-host');
     host.inert = true; host.setAttribute('aria-busy', 'true');
     const success = await request(url, { target: 'modal-host', origin: origin.url, onSwap() {
-      if (entry) state = entry; else commit(url, { origin, replace });
+      if (entry) state = entry; else commit(url, { origin, replace, previousWindow });
     } });
     if (navigationGeneration !== generation) return;
     host.inert = false; host.removeAttribute('aria-busy');
@@ -188,7 +232,7 @@ export function initWorkspace() {
     const url = new URL(link.href);
     if (url.origin !== location.origin || !(url.pathname === '/tana' || url.pathname.startsWith('/tana/')) || url.hash) return;
     event.preventDefault();
-    if (link.hasAttribute('data-window-close')) { closeWindow(); return; }
+    if (link.hasAttribute('data-window-close')) { closeWindow({ toOrigin: Boolean(state.closeToOrigin) }); return; }
     if (link.hasAttribute('data-window-back')) { closeWindow({ fallbackURL: url.pathname + url.search }); return; }
     if (link.hasAttribute('data-window')) { opener = link; openWindow(url.pathname + url.search); }
     else navigate(url.pathname + url.search);
@@ -203,7 +247,12 @@ export function initWorkspace() {
     if (form.hasAttribute('data-workspace-search')) {
       event.preventDefault();
       const url = new URL(form.action); url.search = new URLSearchParams(new FormData(form));
-      await navigate(url.pathname + url.search); return;
+      const builder = form.hasAttribute('data-search-builder');
+      await navigate(url.pathname + url.search);
+      if (builder && main()?.dataset.pageUrl === url.pathname + url.search) {
+        view.querySelector('[data-search-builder] :is(input[name="value"], select[name="value"]):not([disabled])')?.focus();
+      }
+      return;
     }
     if (!form.hasAttribute('data-async-form')) return;
     event.preventDefault();
@@ -238,7 +287,9 @@ export function initWorkspace() {
     const destination = result.getResponseHeader('X-Workspace-URL');
     if (destination) {
       const url = new URL(destination, location.origin); url.searchParams.set('return_to', origin);
-      commit(url.pathname + url.search, { replace: true, origin: state.origin });
+      commit(url.pathname + url.search, { replace: true, origin: state.origin,
+        previousWindow: state.previousWindow,
+        closeToOrigin: target === 'modal-host' && state.previousWindow === url.pathname });
     }
     hydrate({ focus: true, resetForms: Boolean(changed) });
     if (!changed) {
@@ -293,17 +344,58 @@ export function initWorkspace() {
     form.querySelector('[data-dropdown-config]').hidden = kind !== 'dropdown';
   }
   document.addEventListener('change', event => {
+    if (event.target.matches('[data-icon-picker] input[type="radio"]')) {
+      const picker = event.target.closest('[data-icon-picker]');
+      const selected = event.target.closest('label').querySelector('.type-icon');
+      picker.querySelector('summary .type-icon').style.setProperty('--type-icon', selected.style.getPropertyValue('--type-icon'));
+    }
     if (event.target.matches('[name="data_type"]') && event.target.closest('[data-property-editor]')) configureProperty(event.target.form);
     if (event.target.matches('select[name="item_type"]')) {
       const form = event.target.form;
       if (form?.querySelector('#item-custom-fields')) loadFields(form);
     }
   });
+  document.addEventListener('input', event => {
+    if (!event.target.matches('[data-icon-search]')) return;
+    const picker = event.target.closest('[data-icon-picker]');
+    const query = event.target.value.trim().toLocaleLowerCase();
+    let matches = 0;
+    for (const option of picker.querySelectorAll('.type-icon-option')) {
+      const visible = option.title.toLocaleLowerCase().includes(query);
+      option.hidden = !visible;
+      if (visible) matches++;
+    }
+    picker.querySelector('[data-icon-empty]').hidden = matches > 0;
+  });
+  document.addEventListener('click', event => {
+    if (!event.target.matches('[data-icon-picker] input[type="radio"]')) return;
+    const picker = event.target.closest('[data-icon-picker]');
+    const search = picker.querySelector('[data-icon-search]');
+    search.value = '';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    closeIconPicker(picker, true);
+  });
+  document.addEventListener('pointerdown', event => {
+    for (const picker of view.querySelectorAll('[data-icon-picker][open]')) {
+      if (!picker.contains(event.target)) closeIconPicker(picker);
+    }
+  });
+  document.addEventListener('scroll', event => {
+    for (const picker of view.querySelectorAll('[data-icon-picker][open]')) {
+      if (event.target instanceof Element && event.target.contains(picker)) closeIconPicker(picker);
+    }
+  }, true);
+  window.addEventListener('resize', () => {
+    for (const picker of view.querySelectorAll('[data-icon-picker][open]')) closeIconPicker(picker);
+  });
 
   document.addEventListener('keydown', event => {
     const win = dialog();
     if (!win) return;
-    if (event.key === 'Escape') { event.preventDefault(); closeWindow(); }
+    if (event.key === 'Enter' && event.target.matches('[data-icon-search]')) { event.preventDefault(); return; }
+    const picker = win.querySelector('[data-icon-picker][open]');
+    if (event.key === 'Escape' && picker) { event.preventDefault(); closeIconPicker(picker, true); return; }
+    if (event.key === 'Escape') { event.preventDefault(); closeWindow({ toOrigin: Boolean(state.closeToOrigin) }); }
     if (event.key === 'Tab') {
       const items = [...win.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled])')].filter(el => el.getClientRects().length);
       const first = items[0], last = items.at(-1);

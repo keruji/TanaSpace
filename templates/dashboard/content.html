@@ -15,24 +15,6 @@
     </div>
   </section>
 
-  <section class="workspace-summary" aria-labelledby="workspace-summary-title">
-    <h2 class="sr-only" id="workspace-summary-title">Your collection</h2>
-    <div class="workspace-totals">
-      <a href="{% url 'items:index' %}">
-        <span class="item-symbol">{% include 'includes/icon.html' with icon_name='package' only %}</span>
-        <span><strong>{{ totals.items }}</strong><span>Items</span></span>
-      </a>
-      <a href="{% url 'item_types:index' %}">
-        <span class="item-symbol">{% include 'includes/icon.html' with icon_name='notebook-tabs' only %}</span>
-        <span><strong>{{ type_total }}</strong><span>Types</span></span>
-      </a>
-      <a href="{% url 'items:favorites' %}">
-        <span class="item-symbol">{% include 'includes/icon.html' with icon_name='star' only %}</span>
-        <span><strong>{{ totals.favorites }}</strong><span>Favorites</span></span>
-      </a>
-    </div>
-  </section>
-
   <section class="panel items-preview-panel" aria-labelledby="recent-items-title">
     <div class="panel-heading">
       <h2 id="recent-items-title">Recent items</h2>
@@ -43,7 +25,7 @@
       {% for item in recent_items %}
       <li>
         <a class="item-row" href="{% url 'items:detail' item.pk %}?return_to={{ page_url|urlencode }}" data-window>
-          <span class="item-symbol">{% include 'includes/icon.html' with icon_name='package' only %}</span>
+          <span class="item-symbol">{% include 'includes/type_icon.html' with icon=item.item_type.icon only %}</span>
           <div class="item-details">
             <h3>{{ item.name }}</h3>
             <p>{{ item.item_type.name }}</p>

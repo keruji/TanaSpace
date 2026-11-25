@@ -3,9 +3,11 @@ from django.db.models.functions import Lower
 import uuid
 
 from common.models import OwnershipModel
+from .icons import DEFAULT_ICON, ICON_CHOICES
 
 
 class ItemTypes(OwnershipModel):
+    icon = models.CharField(max_length=16, choices=ICON_CHOICES, default=DEFAULT_ICON, db_default=DEFAULT_ICON)
     property_schema_version = models.PositiveIntegerField(default=0, db_default=0)
     active = models.BooleanField(default=True)
     sequence = models.PositiveIntegerField(default=0)

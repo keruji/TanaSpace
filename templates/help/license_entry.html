@@ -1,0 +1,5 @@
+<details class="license-entry">
+  <summary><span>{{ entry.name }}{% if entry.version %} <small>{{ entry.version }}</small>{% endif %}</span><span>{{ entry.license|truncatechars:65 }}</span></summary>
+  {% if entry.credit %}<p>{{ entry.credit }} <a href="https://openmoji.org/" target="_blank" rel="noopener noreferrer">openmoji.org</a> · <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a></p>{% endif %}
+  {% if entry.rendered %}<div class="license-document">{{ entry.rendered }}</div>{% else %}<pre>{{ entry.text }}</pre>{% endif %}
+</details>

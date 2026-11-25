@@ -42,19 +42,49 @@ test('filter items by description and property, then delete the property', async
   await page.getByLabel('Brand', { exact: true }).fill('ACME');
   await page.getByRole('button', { name: 'Save item', exact: true }).click();
   await page.getByRole('link', { name: 'Close window' }).click();
-  await page.locator('.item-search input[name=q]').fill('photography');
-  await select(page, 'Custom property', 'Devices — Brand');
-  await page.getByLabel('Property value').fill('acme');
+  await select(page, 'Search by', 'Description');
+  await page.getByRole('textbox', { name: 'Search value' }).fill('photography');
+  await page.locator('.item-search button[type=submit]').click();
+  await select(page, 'Search by', 'Tana Type');
+  await select(page, 'Tana Type', 'Devices');
+  await expect(page.getByRole('button', { name: 'Remove Tana Type: Devices' })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Tana Type', exact: true })).toContainText('Choose a type');
+  await expect(page.locator('#search-type-value option[value=""]')).toHaveAttribute('hidden', '');
+  await page.locator('.search-properties summary').click();
+  await page.getByRole('button', { name: 'Brand', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Search value' }).fill('acme');
   await page.locator('.item-search button[type=submit]').click();
   await expect(page.getByRole('link', { name: 'View Camera' })).toBeVisible();
   await page.getByRole('link', { name: 'View Camera' }).click();
   await page.getByRole('link', { name: 'Close window' }).click();
-  await expect(page.getByLabel('Property value')).toHaveValue('acme');
+  await expect(page.getByRole('button', { name: 'Remove Brand: acme' })).toBeVisible();
   await page.goto(`/tana/item_types/${typeID}/edit/`);
   await page.getByRole('link', { name: 'Delete Brand', exact: true }).click();
   await expect(page.locator('#modal-host')).toContainText('permanently deletes');
   await page.getByRole('button', { name: 'Delete property', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Delete Brand', exact: true })).toHaveCount(0);
+});
+
+test('search selection menus use themed controls and shared dropdown options', async ({ page }) => {
+  await start(page);
+  await newType(page, 'Devices');
+  await property(page, 'Unit', 'Dropdown', () => page.getByLabel('Label', { exact: true }).fill('Each'));
+  await page.goto('/tana/items/');
+  await select(page, 'Search by', 'Tana Type');
+  const type = page.getByRole('combobox', { name: 'Tana Type', exact: true });
+  await expect(type).toContainText('Choose a type');
+  await type.click();
+  await expect(page.getByRole('option', { name: 'Choose a type' })).toHaveCount(0);
+  await page.getByRole('option', { name: 'Devices', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Remove Tana Type: Devices' })).toBeVisible();
+  await page.locator('.search-properties summary').click();
+  await page.getByRole('button', { name: 'Unit', exact: true }).click();
+  const value = page.getByRole('combobox', { name: 'Search value', exact: true });
+  await expect(value).toContainText('Choose an option');
+  await value.click();
+  await expect(page.getByRole('option', { name: 'Choose an option' })).toHaveCount(0);
+  await page.getByRole('option', { name: 'Each', exact: true }).click();
+  await expect(value).toContainText('Each');
 });
 
 test('property editor, dynamic item fields, renamed labels, and archived values work together', async ({ page }) => {

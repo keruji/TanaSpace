@@ -18,6 +18,7 @@ from item_types.models import ItemTypes
 from .forms import ItemForm, ItemSearchForm
 from .models import Item
 from item_types.properties import detail_properties
+from .search import search_items
 
 LIST_LIMIT = 40
 
@@ -45,6 +46,7 @@ def page(request, *, form=None, selected_item=None, modal_mode=None, favorites_o
                 items = items.filter(**{f"property_values__{prop.pk}": search.cleaned_data["filter_value"]})
     else:
         items = items.none()
+    items, search_builder = search_items(request, items)
     page_obj = Paginator(items, LIST_LIMIT).get_page(request.GET.get("page"))
     base = reverse("items:favorites" if favorites_only else "items:index")
     query = request.GET.copy()
@@ -57,7 +59,7 @@ def page(request, *, form=None, selected_item=None, modal_mode=None, favorites_o
     count = owned.count()
     context = {
         "active_nav": "favorites" if favorites_only else "items", "page_url": page_url,
-        "items": page_obj.object_list, "page_obj": page_obj, "search_form": search,
+        "items": page_obj.object_list, "page_obj": page_obj, "search_form": search, "search_builder": search_builder,
         "item_count": count, "result_count": page_obj.paginator.count,
         "at_item_limit": count >= settings.MAX_ITEMS_PER_USER, "favorites_only": favorites_only,
         "property_rows": detail_properties(selected_item) if selected_item else ([], []),

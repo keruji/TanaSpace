@@ -114,7 +114,7 @@ under the license’s terms. For commercial use outside those terms, separate
 permission is required. Read [LICENSE](LICENSE) for the full terms and notices.
 
 Third-party software keeps its own licenses. UI icons are from
-[Lucide](static/images/lucide-LICENSE.txt).
+[Lucide](static/images/lucide-LICENSE.txt) and [OpenMoji](https://openmoji.org/), licensed under [CC BY-SA 4.0](static/images/openmoji/LICENSE.txt). OpenMoji black SVGs are used unmodified and displayed using CSS masks.
 
 These terms do not retract permissions already granted for versions previously
 released under the Unlicense.

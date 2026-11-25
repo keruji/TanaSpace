@@ -7,7 +7,7 @@
   {% elif modal_mode == 'delete' %}
     <h2 id="window-title">Delete {{ selected_item.name }}?</h2>
   {% else %}
-    <p class="record-type">{% include 'includes/icon.html' with icon_name='notebook-tabs' only %} {{ selected_item.item_type.name }}</p>
+    <p class="record-type">{% include 'includes/type_icon.html' with icon=selected_item.item_type.icon only %} {{ selected_item.item_type.name }}</p>
     <h2 id="window-title">{{ selected_item.name }}</h2>
   {% endif %}
 {% endblock %}

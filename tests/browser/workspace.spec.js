@@ -112,9 +112,7 @@ test('windows retain the underlying page and support item editing, favorites and
   await expect(page.locator('#modal-host h2')).toHaveText('Updated hammer');
   await page.getByRole('button', { name: 'Add to favorites' }).click();
   await expect(page.getByRole('button', { name: 'Remove from favorites' })).toBeVisible();
-  await page.keyboard.press('Escape');
-  await expect(page.locator('#modal-host h2')).toHaveText('Updated hammer');
-  await page.keyboard.press('Escape');
+  await page.getByRole('link', { name: 'Close window' }).click();
   await expect(page.locator('[role=dialog]')).toHaveCount(0);
   await page.getByRole('link', { name: 'Favorites', exact: true }).click();
   await page.getByRole('link', { name: 'View Updated hammer' }).click();
@@ -129,9 +127,9 @@ test('windows retain the underlying page and support item editing, favorites and
 test('bound validation retains edits and window close returns to the filtered origin', async ({ page }) => {
   await type(page);
   await page.getByRole('link', { name: 'My Tana', exact: true }).click();
-  await page.locator('.item-search input[name=q]').fill('hammer');
+  await page.getByRole('textbox', { name: 'Search value' }).fill('hammer');
   await page.locator('.item-search button[type=submit]').click();
-  await expect(page).toHaveURL(/q=hammer/);
+  await expect(page).toHaveURL(/value=hammer/);
   await page.locator('#main').evaluate(el => el.dataset.identity = 'underlying');
   await page.getByRole('link', { name: 'Add item', exact: true }).click();
   await expect(page.locator('#main')).toHaveAttribute('data-identity', 'underlying');
@@ -146,7 +144,7 @@ test('bound validation retains edits and window close returns to the filtered or
   page.once('dialog', dialog => dialog.accept());
   await page.keyboard.press('Escape');
   await expect(page.locator('[role=dialog]')).toHaveCount(0);
-  await expect(page).toHaveURL(/q=hammer/);
+  await expect(page).toHaveURL(/value=hammer/);
 });
 
 test('direct window visits close safely, and protected types remain visible', async ({ page }) => {
@@ -333,6 +331,7 @@ test('themed select supports keyboard selection, Escape isolation, and form subm
   await expect(page.locator('select[name=item_type]')).toHaveValue('');
   await combo.click();
   const list = page.getByRole('listbox');
+  await expect(list.getByRole('option', { name: 'Choose an option' })).toHaveCount(0);
   const dimensions = await list.evaluate(element => ({
     scrollHeight: element.scrollHeight,
     clientHeight: element.clientHeight,
@@ -357,9 +356,8 @@ test('closing and saving windows never exposes the native select behind the cust
   await page.getByRole('link', { name: 'My Tana', exact: true }).click();
   async function checkSelection() {
     await expect(page.locator('#main')).not.toHaveClass(/htmx-settling/);
-    const native = page.locator('.item-search select[name=type]');
-    expect(await native.evaluate(el => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
-    await expect(page.locator('.item-search .select-control').filter({ has: page.locator('select[name=type]') }).locator('.select-trigger')).toHaveCount(1);
+    await expect(page.getByRole('combobox', { name: 'Search by' })).toHaveCount(1);
+    await expect(page.getByRole('textbox', { name: 'Search value' })).toHaveCount(1);
   }
   for (let repeat = 0; repeat < 3; repeat++) {
     await page.locator('#main').evaluate(el => el.dataset.beforeWindow = 'original');

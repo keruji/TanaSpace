@@ -4,6 +4,8 @@ export function initWorkspaceShell() {
   const sidebar = document.querySelector('#workspace-sidebar');
   const menu = document.querySelector('#account-menu');
   const account = document.querySelector('#account-toggle');
+  const helpToggle = document.querySelector('[data-help-toggle]');
+  const helpMenu = document.querySelector('[data-help-menu]');
   const mobile = matchMedia('(max-width: 640px)');
   const toggles = [...document.querySelectorAll('[data-sidebar-toggle]')];
   let desktop = document.documentElement.dataset.sidebar || (innerWidth > 800 ? 'expanded' : 'collapsed');
@@ -15,6 +17,8 @@ export function initWorkspaceShell() {
     menu.hidden = true;
     menu.inert = true;
     account.setAttribute('aria-expanded', 'false');
+    helpMenu.hidden = true;
+    helpToggle.setAttribute('aria-expanded', 'false');
     if (restore || hadFocus) account.focus({ preventScroll: true });
   }
   function setDrawer(open, restore = false) {
@@ -61,6 +65,10 @@ export function initWorkspaceShell() {
   document.querySelectorAll('[data-sidebar-close]').forEach(el => el.addEventListener('click', () => setDrawer(false, true)));
   account.hidden = false;
   closeMenu();
+  helpToggle.addEventListener('click', () => {
+    helpMenu.hidden = !helpMenu.hidden;
+    helpToggle.setAttribute('aria-expanded', String(!helpMenu.hidden));
+  });
   function openMenu({ keyboard = false, last = false } = {}) {
     menu.hidden = false;
     menu.inert = false;

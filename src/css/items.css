@@ -20,10 +20,6 @@
 .page-actions .primary-button { white-space: nowrap; }
 
 .item-search {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
-  align-items: start;
-  gap: .85rem;
   margin-bottom: 1rem;
   padding: 1rem;
   border: 1px solid var(--line);
@@ -31,20 +27,7 @@
   background: var(--surface);
 }
 .item-search > div { min-width: 0; }
-.item-search .secondary-button { grid-column: 3; grid-row: 2; margin-top: 1.7rem; }
-.item-search .search-help { margin-top: .35rem; color: var(--muted); font-size: .75rem; line-height: 1.4; }
 .item-search .errorlist { margin-top: .35rem; color: var(--danger-text); font-size: .85rem; }
-.search-field { position: relative; }
-.search-field .ui-icon {
-  position: absolute;
-  top: .85rem;
-  left: .75rem;
-  width: 1.05rem;
-  height: 1.05rem;
-  color: var(--muted);
-  pointer-events: none;
-}
-.search-field input { padding-inline-start: 2.3rem; }
 
 .item-list-panel { padding: 0; }
 .item-list-panel > .panel-heading { padding: .9rem clamp(.8rem, 2vw, 1.35rem); border-bottom: 1px solid var(--line); }
@@ -112,12 +95,52 @@
 
 @media (max-width: 640px) {
   .items-page-heading { gap: .85rem; }
-  .item-search { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
-  .item-search > :first-child { grid-column: 1 / -1; }
-  .item-search .secondary-button { grid-column: 1 / -1; grid-row: auto; justify-self: start; margin-top: 0; }
   .item-row { grid-template-columns: auto minmax(0, 1fr) auto; }
   .item-row time { grid-column: 2; grid-row: 2; margin-top: -.25rem; }
   .row-chevron { grid-column: 3; grid-row: 1; }
 }
 
 .pagination-note { text-align: center; margin-top: 1rem; }
+
+.search-builder-controls { display: flex; align-items: end; flex-wrap: wrap; gap: .75rem; }
+.search-builder-controls > div { min-width: 0; flex: 1 1 12rem; }
+.search-builder-controls select, .search-builder-controls input {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: .55rem .75rem;
+  border: 1px solid var(--control-line);
+  border-radius: .5rem;
+  background: var(--surface);
+  color: var(--text);
+}
+.search-builder-controls .secondary-button { margin: 0; }
+.search-chips { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .75rem; }
+.search-chips:empty { margin: 0; }
+.search-chip { display: inline-flex; align-items: center; gap: .4rem; padding: .25rem .4rem .25rem .7rem; border: 1px solid var(--line); border-radius: 2rem; background: var(--soft); font-size: .875rem; }
+.search-chip button { width: 1.6rem; height: 1.6rem; border-radius: 50%; font-size: 1.1rem; line-height: 1; }
+.search-chip button:hover { background: var(--accent-soft); }
+.search-properties { margin-top: .75rem; color: var(--muted); font-size: .875rem; }
+.search-properties summary { cursor: pointer; font-weight: 650; }
+.search-property-options { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; padding-inline-start: 1rem; }
+.search-property-options button { padding: .35rem .65rem; border: 1px solid var(--line); border-radius: .4rem; color: var(--accent-text); }
+.search-property-options button:hover { background: var(--accent-soft); }
+
+/* Tana Type icons use the same ink as their surrounding control. */
+.type-icon { display: inline-block; flex: none; width: 1.35rem; height: 1.35rem; background: currentColor; mask: var(--type-icon) center / contain no-repeat; }
+.type-name-label { display: block; margin-bottom: .4rem; color: var(--text); font-size: .875rem; font-weight: 650; }
+.type-name-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .75rem; align-items: start; }
+.type-icon-field { position: relative; }
+.modal-card:has(.type-icon-picker[open]:not([data-floating])) { min-height: min(39rem, 100%); }
+.type-icon-picker summary { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 1px solid var(--control-line); border-radius: .5rem; color: var(--accent-text); background: var(--surface); cursor: pointer; list-style: none; }
+.type-icon-picker summary::-webkit-details-marker { display: none; }
+.type-icon-picker summary:hover, .type-icon-picker[open] summary { border-color: var(--accent); background: var(--accent-soft); }
+.type-icon-panel { position: absolute; z-index: 3; top: calc(100% + .25rem); left: 0; width: min(19rem, calc(100vw - 4rem)); padding: .45rem; border: 1px solid var(--control-line); border-radius: .55rem; background: var(--surface); box-shadow: 0 .65rem 1.8rem var(--shadow); }
+.type-icon-panel:popover-open { position: fixed; inset: auto; margin: 0; overflow-y: auto; color: var(--text); }
+.form-field .type-icon-search { min-height: 2.35rem; margin-bottom: .4rem; }
+.type-icon-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .25rem; max-height: 13rem; overflow-y: auto; }
+.form-field .type-icon-option { display: grid; place-items: center; position: relative; width: 100%; height: 2.5rem; margin: 0; border-radius: .35rem; cursor: pointer; }
+.type-icon-empty { padding: .65rem .3rem; color: var(--muted); font-size: .875rem; }
+.type-icon-option:hover, .type-icon-option:has(input:focus-visible) { background: var(--soft); outline: 2px solid var(--focus); outline-offset: -2px; }
+.type-icon-option:has(input:checked) { background: var(--accent-soft); color: var(--accent-text); }
+.form-field .type-icon-option input[type="radio"] { position: absolute; width: 1px; height: 1px; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; }

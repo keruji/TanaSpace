@@ -14,7 +14,7 @@
       {% for item_type in item_types %}
       <li>
         <a class="item-row" href="{% url 'item_types:detail' item_type.pk %}?return_to={{ page_url|urlencode }}" data-window aria-label="View {{ item_type.name }}">
-          <span class="item-symbol">{% include 'includes/icon.html' with icon_name='notebook-tabs' only %}</span>
+          <span class="item-symbol">{% include 'includes/type_icon.html' with icon=item_type.icon only %}</span>
           <div class="item-details">
             <h3>{{ item_type.name }}</h3>
             <p class="item-meta">{{ item_type.item_count }} item{{ item_type.item_count|pluralize }}</p>

@@ -42,7 +42,7 @@ queries to the signed-in user; creating a model does not add those rules.
 | `config/urls.py` | Top-level routes: `/`, `/accounts/`, `/tana`, `/tana/items/`, `/tana/item_types/`, and `/admin/`. |
 | `accounts/` | Custom `User`, Profile editing, Settings overview, demo entry/logout, and unchanged disabled public login/signup routes. |
 | `common/models.py` | Abstract `OwnershipModel` with shared name, owner, creation time, and edit history fields for future user-owned models. |
-| `dashboard/` | The `/tana` page. Its view fetches the signed-in user's three latest items and owner-scoped totals. |
+| `dashboard/` | The `/tana` page. Its view fetches the signed-in user's three latest items. |
 | `items/` | Owner-scoped items, search/type filters, Favorites, HTML window fragments, quota enforcement, and tests. |
 | `item_types/` | Type model, form, ordered list, floating create/view/edit/delete pages, routes, migrations, and tests. |
 | `templates/base.html` | Shared HTML shell for app and account pages. |

@@ -5,6 +5,7 @@ from accounts.urls import urlpatterns as account_routes, workspace_patterns
 from items.urls import urlpatterns as item_routes
 from items.views import favorites
 from .views import health
+from .help_views import about, licenses
 
 account_patterns = [
     path("accounts/", include(account_routes)),
@@ -17,6 +18,8 @@ item_patterns = [
 
 urlpatterns = [
     path("health/", health, name="health"),
+    path("tana/help/about/", about, name="help_about"),
+    path("tana/help/licenses/", licenses, name="help_licenses"),
     path("", TemplateView.as_view(template_name="landing.html"), name="landing"),
     path("", include((account_patterns, "accounts"))),
     path("", include((item_patterns, "items"))),
