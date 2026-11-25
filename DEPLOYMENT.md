@@ -10,19 +10,6 @@ requests. Tests must pass before a pull request can merge.
 Pull requests use squash merging so each merged pull request produces
 one commit on the production branch.
 
-### Deployment platform
-
-Production runs on one server using Docker Compose.
-
-The production configuration is `compose.production.yml`.
-
-GitHub Actions will connect to the server through SSH.
-
-Server address: 66.181.46.66
-SSH username: keruji
-Deployment directory: /opt/tanaspace
-Public website URL: https://tanaspace.dpdns.org/
-
 ### Application images
 
 GitHub Actions will build application images and publish them to
@@ -112,20 +99,9 @@ this release to deploy, separately review and approve the schema step:
 1. Build/publish the reviewed candidate image and record its immutable digest.
 2. Coordinate with deployment/recovery so neither is running, and acquire the
    same deployment lock for the schema operation.
-3. From the production checkout, run the following with the approved candidate
-   image. These commands are a manual operation, not part of startup or CI:
-
-   ```bash
-   # Use the same session for the lock and migration command.
-   exec 9>"$HOME/.local/state/tanaspace/deployment.lock"
-   flock -x 9
-   # Set candidate_image to the reviewed ghcr.io/...@sha256:... reference.
-   APP_IMAGE="$candidate_image" docker compose \
-     --project-name tanaspace_prod --env-file .env.production \
-     -f compose.production.yml run --rm --no-deps app \
-     python manage.py migrate --noinput
-   flock -u 9
-   ```
+3. Use the manual migration helper described below to preview the migration plan,
+   then explicitly apply it with the same reviewed candidate digest. The helper
+   acquires the deployment lock and overrides old local-image Compose settings.
 
 4. Allow the ordinary release preflight, application deployment, and public
    health verification to run. Keep the preflight guard enabled.
@@ -154,3 +130,75 @@ changes. Before opening custom-property writes to production, designate a rollba
 target containing this feature, or suspend item/type writes while an older image is
 running. Database defaults preserve old inserts but cannot supply the new validation
 behavior. Local migration execution does not authorize production migration/deploy.
+
+
+## Running production migrations manually
+
+Run `scripts/migrate-production.sh` on the VPS as `<server username>`. It uses the exact
+published image, even if `/home/<server username>/TanaSpace/compose.production.yml` still
+selects `tanaspace_prod-app` and ignores `APP_IMAGE`. No database reset is needed.
+
+### First-time installation
+
+Commit the script, helper tests, workflow syntax check, and this documentation on
+your working branch and merge their PR through the usual repository checks.
+The migration helper does not need to be part of a successful production deploy
+before you can use it. On your **local development machine**, copy only the script:
+
+```bash
+scp scripts/migrate-production.sh '<server username>@<server address>:~/migrate-production.sh'
+```
+
+Replace `<server username>` and `<server address>` with your SSH username and
+server hostname/IP before running the command. Add `-P PORT`
+if your SSH server uses a custom port. Running it with `bash` needs no chmod.
+Copy the script again whenever this helper changes; its location is independent
+of the production checkout. Do not replace the production Compose file merely to
+install this helper.
+
+### Each release with pending migrations
+
+1. On GitHub Actions, copy the **Exact image** reference from the image-publication
+   summary for the release you intend to deploy. Use the full `@sha256:` digest,
+   not a branch/tag or the image currently running on the server.
+2. SSH into the VPS as `<server username>` and set that reference:
+
+   ```bash
+   candidate_image='ghcr.io/keruji/tanaspace@sha256:PASTE_THE_FULL_DIGEST'
+   ```
+
+3. Preview the pending migrations:
+
+   ```bash
+   bash ~/migrate-production.sh "$candidate_image"
+   ```
+
+   Preview pulls the image and reads production migration state; it does not
+   apply migrations. Review schema/data changes and their compatibility with
+   the running app and rollback image before proceeding.
+4. Apply that reviewed candidate's migrations explicitly:
+
+   ```bash
+   bash ~/migrate-production.sh "$candidate_image" --apply
+   ```
+
+   Wait for `Migrations completed and verified.` If any step fails, keep its output
+   and resolve the error before retrying deployment. Do not use `--fake` or delete
+   migration records to bypass failures.
+5. Rerun the failed production deployment workflow in GitHub Actions.
+
+The helper holds `/home/<server username>/.local/state/tanaspace/deployment.lock` for both
+preview and apply, waiting up to 60 seconds. It creates a private temporary image
+override, verifies Compose's effective image, runs one-off containers on the
+production Compose network, and removes temporary files on exit. It neither
+replaces the running application nor edits the Compose/env files or release records.
+The automatic preflight and production startup migration guards remain enabled.
+
+The example installation uses `/home/<server username>/TanaSpace`, its
+`.env.production`, and the existing release state directory. Match the helper
+defaults to your installation; `DEPLOY_PATH` and `PRODUCTION_ENV_FILE` support
+alternate checkouts. `DEPLOY_STATE_DIR` is available for isolated tests; on production it must
+match the directory used by `deploy-release.sh`, or the operations will not share
+one lock. Preview/apply both require Docker,
+Docker Compose, Python 3, `flock`, and registry pull access already configured for
+`<server username>`.

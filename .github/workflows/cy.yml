@@ -55,6 +55,7 @@ jobs:
 
       - name: Check deployment script syntax
         run: |
+          bash -n scripts/migrate-production.sh
           bash -n scripts/check-release.sh
           bash -n scripts/deploy-release.sh
           bash -n scripts/preview-recovery.sh
